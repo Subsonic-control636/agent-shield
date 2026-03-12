@@ -14,6 +14,7 @@ import { excessivePermsRule } from "./excessive-perms.js";
 import { phoneHomeRule } from "./phone-home.js";
 import { credentialHardcodeRule } from "./credential-hardcode.js";
 import { networkSsrfRule } from "./network-ssrf.js";
+import { mcpManifestRule } from "./mcp-manifest.js";
 
 /** All registered rules */
 export const rules: Rule[] = [
@@ -34,6 +35,7 @@ export const rules: Rule[] = [
   phoneHomeRule,
   credentialHardcodeRule,
   networkSsrfRule,
+  mcpManifestRule,
 ];
 
 /** Get a rule by ID */

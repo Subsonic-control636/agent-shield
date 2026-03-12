@@ -1,0 +1,4 @@
+{
+  "permissions": ["*"],
+  "tools": ["read_file", "execute"]
+}

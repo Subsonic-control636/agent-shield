@@ -1,0 +1,237 @@
+import type { Rule, Finding, ScannedFile } from "../types.js";
+
+/**
+ * Rule: mcp-manifest
+ * Validates MCP (Model Context Protocol) server configurations.
+ *
+ * Checks:
+ * 1. Declared tools/resources vs actual code behavior
+ * 2. Overly broad tool descriptions that could mislead agents
+ * 3. Undeclared file system / network / exec capabilities
+ * 4. Suspicious tool names or descriptions
+ */
+
+// Patterns indicating MCP server tool registration
+const TOOL_REGISTER_RE =
+  /\.tool\s*\(|addTool\s*\(|registerTool\s*\(|server\.setRequestHandler.*ListTools|tools:\s*\[/;
+
+// Patterns for MCP resource registration
+const RESOURCE_REGISTER_RE =
+  /\.resource\s*\(|addResource\s*\(|registerResource\s*\(|server\.setRequestHandler.*ListResources|resources:\s*\[/;
+
+// Dangerous patterns in tool implementations
+const DANGEROUS_TOOL_PATTERNS: Array<{ pattern: RegExp; desc: string; severity: "critical" | "warning" }> = [
+  { pattern: /child_process|execSync|exec\(|spawn\(/, desc: "Tool executes shell commands", severity: "critical" },
+  { pattern: /fs\.unlink|fs\.rmdir|fs\.rm\b|rimraf/, desc: "Tool deletes files", severity: "warning" },
+  { pattern: /fs\.writeFile|fs\.appendFile|fs\.createWriteStream/, desc: "Tool writes to file system", severity: "warning" },
+  { pattern: /fetch\s*\(|axios|http\.request|https\.request/, desc: "Tool makes outbound HTTP requests", severity: "warning" },
+  { pattern: /eval\s*\(|new\s+Function\s*\(/, desc: "Tool uses dynamic code execution", severity: "critical" },
+  { pattern: /\.ssh|\.aws|\.env\b|credentials|secret/i, desc: "Tool accesses sensitive paths/credentials", severity: "critical" },
+];
+
+// Suspicious tool name/description patterns
+const SUSPICIOUS_TOOL_DESC: Array<{ pattern: RegExp; desc: string }> = [
+  { pattern: /run.*any.*command|execute.*arbitrary|shell.*access/i, desc: "Tool claims unrestricted command execution" },
+  { pattern: /access.*all.*files|read.*entire.*filesystem/i, desc: "Tool claims full filesystem access" },
+  { pattern: /send.*data.*to|upload.*to|transmit.*to/i, desc: "Tool description mentions data transmission" },
+  { pattern: /modify.*system|change.*config/i, desc: "Tool claims system modification capability" },
+];
+
+export const mcpManifestRule: Rule = {
+  id: "mcp-manifest",
+  name: "MCP Server Validation",
+  description: "Validates MCP server tool/resource declarations against actual code behavior",
+
+  run(files: ScannedFile[]): Finding[] {
+    const findings: Finding[] = [];
+
+    // Detect if this is an MCP server project
+    const isMcpServer = detectMcpServer(files);
+    if (!isMcpServer) return findings;
+
+    // Check for MCP manifest/config files
+    checkMcpConfig(files, findings);
+
+    // Analyze tool implementations for dangerous patterns
+    checkToolImplementations(files, findings);
+
+    // Check tool descriptions for suspicious claims
+    checkToolDescriptions(files, findings);
+
+    // Check if tools are registered but have no input validation
+    checkInputValidation(files, findings);
+
+    return findings;
+  },
+};
+
+function detectMcpServer(files: ScannedFile[]): boolean {
+  for (const file of files) {
+    // Check package.json for MCP-related deps
+    if (file.relativePath === "package.json") {
+      try {
+        const pkg = JSON.parse(file.content);
+        const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+        if (
+          allDeps["@modelcontextprotocol/sdk"] ||
+          allDeps["@anthropic-ai/sdk"] ||
+          pkg.mcp
+        ) {
+          return true;
+        }
+      } catch {
+        // ignore parse errors
+      }
+    }
+
+    // Check for MCP imports in code
+    if (file.ext === ".ts" || file.ext === ".js" || file.ext === ".mjs") {
+      if (
+        file.content.includes("@modelcontextprotocol/sdk") ||
+        file.content.includes("McpServer") ||
+        file.content.includes("createMcpServer") ||
+        TOOL_REGISTER_RE.test(file.content)
+      ) {
+        return true;
+      }
+    }
+
+    // Check for mcp.json or similar config
+    if (
+      file.relativePath === "mcp.json" ||
+      file.relativePath.endsWith("/mcp.json")
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function checkMcpConfig(files: ScannedFile[], findings: Finding[]): void {
+  const mcpConfig = files.find(
+    (f) => f.relativePath === "mcp.json" || f.relativePath.endsWith("/mcp.json"),
+  );
+
+  if (mcpConfig) {
+    try {
+      const config = JSON.parse(mcpConfig.content);
+
+      // Check for overly broad permissions
+      if (config.permissions) {
+        const perms = Array.isArray(config.permissions)
+          ? config.permissions
+          : Object.keys(config.permissions);
+        if (perms.length > 5) {
+          findings.push({
+            rule: "mcp-manifest",
+            severity: "warning",
+            file: mcpConfig.relativePath,
+            message: `MCP config declares ${perms.length} permissions — consider reducing scope`,
+          });
+        }
+      }
+
+      // Check for wildcard or dangerous permissions
+      const configStr = JSON.stringify(config);
+      if (configStr.includes('"*"') || configStr.includes('"all"')) {
+        findings.push({
+          rule: "mcp-manifest",
+          severity: "critical",
+          file: mcpConfig.relativePath,
+          message: "MCP config uses wildcard/all permissions",
+        });
+      }
+    } catch {
+      findings.push({
+        rule: "mcp-manifest",
+        severity: "warning",
+        file: mcpConfig.relativePath,
+        message: "Invalid JSON in MCP config file",
+      });
+    }
+  }
+}
+
+function checkToolImplementations(files: ScannedFile[], findings: Finding[]): void {
+  const codeFiles = files.filter(
+    (f) => f.ext === ".ts" || f.ext === ".js" || f.ext === ".mjs" || f.ext === ".cjs",
+  );
+
+  for (const file of codeFiles) {
+    // Only check files that register tools
+    if (!TOOL_REGISTER_RE.test(file.content) && !RESOURCE_REGISTER_RE.test(file.content)) {
+      continue;
+    }
+
+    for (let i = 0; i < file.lines.length; i++) {
+      const line = file.lines[i]!;
+      const trimmed = line.trimStart();
+      if (trimmed.startsWith("//") || trimmed.startsWith("*")) continue;
+
+      for (const { pattern, desc, severity } of DANGEROUS_TOOL_PATTERNS) {
+        if (pattern.test(line)) {
+          findings.push({
+            rule: "mcp-manifest",
+            severity,
+            file: file.relativePath,
+            line: i + 1,
+            message: `MCP tool: ${desc}`,
+            evidence: line.trim().slice(0, 120),
+          });
+          break;
+        }
+      }
+    }
+  }
+}
+
+function checkToolDescriptions(files: ScannedFile[], findings: Finding[]): void {
+  const codeFiles = files.filter(
+    (f) => f.ext === ".ts" || f.ext === ".js" || f.ext === ".mjs",
+  );
+
+  for (const file of codeFiles) {
+    // Look for tool description strings
+    for (let i = 0; i < file.lines.length; i++) {
+      const line = file.lines[i]!;
+
+      for (const { pattern, desc } of SUSPICIOUS_TOOL_DESC) {
+        if (pattern.test(line)) {
+          findings.push({
+            rule: "mcp-manifest",
+            severity: "warning",
+            file: file.relativePath,
+            line: i + 1,
+            message: `Suspicious MCP tool description: ${desc}`,
+            evidence: line.trim().slice(0, 120),
+          });
+          break;
+        }
+      }
+    }
+  }
+}
+
+function checkInputValidation(files: ScannedFile[], findings: Finding[]): void {
+  const codeFiles = files.filter(
+    (f) => f.ext === ".ts" || f.ext === ".js" || f.ext === ".mjs",
+  );
+
+  for (const file of codeFiles) {
+    if (!TOOL_REGISTER_RE.test(file.content)) continue;
+
+    // Check for tools that accept path inputs without validation
+    const hasPathInput = /path|file|dir|folder/i.test(file.content);
+    const hasPathValidation = /sanitize|validate|allowlist|whitelist|isAbsolute|normalize|resolve/i.test(file.content);
+    const hasTraversalCheck = /\.\.\//i.test(file.content) || /path.*traversal/i.test(file.content);
+
+    if (hasPathInput && !hasPathValidation && !hasTraversalCheck) {
+      findings.push({
+        rule: "mcp-manifest",
+        severity: "warning",
+        file: file.relativePath,
+        message: "MCP tool accepts path inputs but has no visible path validation/sanitization",
+      });
+    }
+  }
+}

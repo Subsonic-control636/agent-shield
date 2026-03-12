@@ -29,6 +29,7 @@ npx @elliotllliu/agentshield scan ./my-skill/
 | `sensitive-read` | 🟡 Warning | Accesses `~/.ssh/id_rsa`, `~/.aws/credentials`, etc. |
 | `excessive-perms` | 🟡 Warning | Too many or dangerous permissions in SKILL.md |
 | `phone-home` | 🟡 Warning | Periodic timers + HTTP requests (beacon/heartbeat pattern) |
+| `mcp-manifest` | 🟡 Warning | MCP server tool/resource declarations vs actual code behavior |
 
 ## Example Output
 
