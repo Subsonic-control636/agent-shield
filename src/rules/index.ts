@@ -15,6 +15,8 @@ import { phoneHomeRule } from "./phone-home.js";
 import { credentialHardcodeRule } from "./credential-hardcode.js";
 import { networkSsrfRule } from "./network-ssrf.js";
 import { mcpManifestRule } from "./mcp-manifest.js";
+import { promptInjection } from "./prompt-injection.js";
+import { toolShadowing } from "./tool-shadowing.js";
 
 /** All registered rules */
 export const rules: Rule[] = [
@@ -36,6 +38,9 @@ export const rules: Rule[] = [
   credentialHardcodeRule,
   networkSsrfRule,
   mcpManifestRule,
+  // Prompt injection & tool shadowing
+  promptInjection,
+  toolShadowing,
 ];
 
 /** Get a rule by ID */

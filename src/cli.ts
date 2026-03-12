@@ -7,6 +7,7 @@ import { scan } from "./scanner/index.js";
 import { printReport } from "./reporter/terminal.js";
 import { printJsonReport } from "./reporter/json.js";
 import { generateBadgeSvg, generateBadgeMarkdown } from "./reporter/badge.js";
+import { discoverAgents, printDiscovery } from "./discover.js";
 import { DEFAULT_CONFIG, DEFAULT_IGNORE } from "./config.js";
 
 const program = new Command();
@@ -225,9 +226,17 @@ program
     }
   });
 
+program
+  .command("discover")
+  .description("Discover installed AI agents, MCP servers, and skills on this machine")
+  .action(() => {
+    const agents = discoverAgents();
+    printDiscovery(agents);
+  });
+
 // Default: if first arg looks like a directory, treat as scan
 const args = process.argv.slice(2);
-if (args.length > 0 && !args[0]!.startsWith("-") && !["scan", "init", "watch", "compare", "badge", "help"].includes(args[0]!)) {
+if (args.length > 0 && !args[0]!.startsWith("-") && !["scan", "init", "watch", "compare", "badge", "discover", "help"].includes(args[0]!)) {
   process.argv.splice(2, 0, "scan");
 }
 
