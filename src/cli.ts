@@ -6,6 +6,7 @@ import { existsSync, statSync, writeFileSync, watch as fsWatch, mkdirSync } from
 import { scan } from "./scanner/index.js";
 import { printReport } from "./reporter/terminal.js";
 import { printJsonReport } from "./reporter/json.js";
+import { generateBadgeSvg, generateBadgeMarkdown } from "./reporter/badge.js";
 import { DEFAULT_CONFIG, DEFAULT_IGNORE } from "./config.js";
 
 const program = new Command();
@@ -192,9 +193,41 @@ program
     console.log();
   });
 
+program
+  .command("badge")
+  .description("Generate a security badge for your project")
+  .argument("<directory>", "Target directory to scan")
+  .option("--svg", "Output raw SVG")
+  .option("--markdown", "Output markdown badge (default)")
+  .option("-o, --output <file>", "Save SVG to file")
+  .action((directory: string, options: { svg?: boolean; markdown?: boolean; output?: string }) => {
+    const target = resolve(directory);
+    if (!existsSync(target) || !statSync(target).isDirectory()) {
+      console.error(`Error: "${directory}" is not a valid directory`);
+      process.exit(1);
+    }
+
+    const result = scan(target);
+
+    if (options.svg || options.output) {
+      const svg = generateBadgeSvg(result);
+      if (options.output) {
+        writeFileSync(resolve(options.output), svg);
+        console.log(`✅ Badge saved to ${options.output}`);
+      } else {
+        console.log(svg);
+      }
+    } else {
+      // Default: markdown
+      const md = generateBadgeMarkdown(result.score);
+      console.log(md);
+      console.log(`\nPaste this in your README.md to show the badge.`);
+    }
+  });
+
 // Default: if first arg looks like a directory, treat as scan
 const args = process.argv.slice(2);
-if (args.length > 0 && !args[0]!.startsWith("-") && !["scan", "init", "watch", "compare", "help"].includes(args[0]!)) {
+if (args.length > 0 && !args[0]!.startsWith("-") && !["scan", "init", "watch", "compare", "badge", "help"].includes(args[0]!)) {
   process.argv.splice(2, 0, "scan");
 }
 
