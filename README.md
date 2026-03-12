@@ -29,6 +29,7 @@ npx @elliotllliu/agentshield scan ./my-skill/
 | `sensitive-read` | 🟡 Warning | Accesses `~/.ssh/id_rsa`, `~/.aws/credentials`, etc. |
 | `excessive-perms` | 🟡 Warning | Too many or dangerous permissions in SKILL.md |
 | `phone-home` | 🟡 Warning | Periodic timers + HTTP requests (beacon/heartbeat pattern) |
+| `mcp-manifest` | 🟡 Warning | MCP server: wildcard perms, undeclared capabilities, suspicious tool descriptions |
 | `mcp-manifest` | 🟡 Warning | MCP server tool/resource declarations vs actual code behavior |
 
 ## Example Output
@@ -64,8 +65,54 @@ agentshield scan ./skill/ --json
 # Fail CI if score is below threshold
 agentshield scan ./skill/ --fail-under 70
 
+# Disable specific rules
+agentshield scan ./skill/ --disable supply-chain,phone-home
+
+# Only run specific rules
+agentshield scan ./skill/ --enable backdoor,data-exfil
+
 # Shorthand (directory as first arg)
 agentshield ./skill/
+
+# Generate config files
+agentshield init
+
+# Watch mode (re-scan on changes)
+agentshield watch ./skill/
+
+# Compare two versions
+agentshield compare ./skill-v1/ ./skill-v2/
+```
+
+## Configuration
+
+Create `.agentshield.yml` in your project (or run `agentshield init`):
+
+```yaml
+rules:
+  disable:
+    - supply-chain    # skip npm audit
+    - phone-home      # allow periodic HTTP
+
+severity:
+  sensitive-read: info   # downgrade to info
+
+failUnder: 70   # CI threshold
+
+ignore:
+  - "tests/**"
+  - "*.test.ts"
+```
+
+### `.agentshieldignore`
+
+Exclude files from scanning (same syntax as `.gitignore`):
+
+```
+node_modules/
+dist/
+*.test.ts
+__tests__/
 ```
 
 ## CI Integration
