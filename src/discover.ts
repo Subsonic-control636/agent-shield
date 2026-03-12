@@ -1,4 +1,4 @@
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import chalk from "chalk";
@@ -108,10 +108,25 @@ export function discoverAgents(): DiscoveredAgent[] {
     }
 
     if (foundConfig || foundSkillsDir) {
+      let mcpServerCount = 0;
+      if (foundConfig) {
+        try {
+          const content = readFileSync(foundConfig, "utf-8");
+          const parsed = JSON.parse(content);
+          // Try common MCP keys
+          const servers = parsed.mcpServers || parsed["mcp.servers"] || parsed.context_servers || {};
+          if (typeof servers === "object" && servers !== null) {
+            mcpServerCount = Object.keys(servers).length;
+          }
+        } catch {
+          // Can't parse — still report agent
+        }
+      }
       found.push({
         name: agent.name,
         configPath: foundConfig,
         skillsDir: foundSkillsDir,
+        mcpServerCount,
       });
     }
   }
@@ -138,6 +153,9 @@ export function printDiscovery(agents: DiscoveredAgent[]): void {
     console.log(chalk.bold(`  ${agent.name}`));
     if (agent.configPath) {
       console.log(chalk.dim(`    Config: ${agent.configPath}`));
+      if (agent.mcpServerCount && agent.mcpServerCount > 0) {
+        console.log(`    MCP Servers: ${agent.mcpServerCount}`);
+      }
     }
     if (agent.skillsDir) {
       console.log(chalk.dim(`    Skills: ${agent.skillsDir}`));

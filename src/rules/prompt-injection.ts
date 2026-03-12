@@ -42,7 +42,7 @@ const INJECTION_PATTERNS: Array<{ pattern: RegExp; description: string; severity
   { pattern: /(?:this\s+tool\s+)?(?:requires|needs|demands)\s+(?:that\s+)?(?:you|the\s+agent)\s+(?:first|also|always)/i, description: "Tool description imposes agent requirements", severity: "warning" },
 
   // Data exfiltration via prompt
-  { pattern: /(?:send|post|transmit|forward|copy)\s+(?:all|any|the|this)?\s*(?:conversation|chat|history|context|messages?)\s+(?:to|at)\s+/i, description: "Instructs exfiltration of conversation data", severity: "critical" },
+  { pattern: /(?:send|post|transmit|forward|copy)\s+(?:all|any|the|this)?\s*(?:conversation|chat|history|context|messages?)(?:\s+(?:history|data|log|context))?\s+(?:to|at)\s+/i, description: "Instructs exfiltration of conversation data", severity: "critical" },
   { pattern: /(?:include|append|attach|embed)\s+(?:the\s+)?(?:api\s+key|token|password|secret|credential|ssh\s+key)/i, description: "Attempts to extract credentials via prompt", severity: "critical" },
 
   // Encoding-based evasion

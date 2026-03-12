@@ -8,7 +8,7 @@ import { printReport } from "./reporter/terminal.js";
 import { printJsonReport } from "./reporter/json.js";
 import { generateBadgeSvg, generateBadgeMarkdown } from "./reporter/badge.js";
 import { discoverAgents, printDiscovery } from "./discover.js";
-import { getLlmConfigFromEnv, runLlmAnalysis } from "./llm-analyzer.js";
+import { getLlmConfigFromEnv, resolveAiConfig, runLlmAnalysis } from "./llm-analyzer.js";
 import { DEFAULT_CONFIG, DEFAULT_IGNORE } from "./config.js";
 
 const program = new Command();
@@ -26,8 +26,10 @@ program
   .option("--fail-under <score>", "Exit with code 1 if score is below threshold", parseInt)
   .option("--disable <rules>", "Comma-separated rules to disable")
   .option("--enable <rules>", "Comma-separated rules to enable (only these)")
-  .option("--llm", "Enable LLM-based deep prompt injection analysis (requires API key in env)")
-  .action(async (directory: string, options: { json?: boolean; failUnder?: number; disable?: string; enable?: string; llm?: boolean }) => {
+  .option("--ai", "Enable AI-powered deep analysis (requires API key)")
+  .option("--provider <provider>", "AI provider: openai | anthropic | ollama (default: auto-detect)")
+  .option("--model <model>", "AI model to use (e.g. gpt-4o, claude-sonnet-4-20250514, llama3)")
+  .action(async (directory: string, options: { json?: boolean; failUnder?: number; disable?: string; enable?: string; ai?: boolean; provider?: string; model?: string }) => {
     const target = resolve(directory);
 
     if (!existsSync(target) || !statSync(target).isDirectory()) {
@@ -48,19 +50,19 @@ program
 
     const result = scan(target, configOverride);
 
-    // LLM-based deep analysis (optional)
-    if (options.llm) {
-      const llmConfig = getLlmConfigFromEnv();
+    // AI-powered deep analysis (optional)
+    if (options.ai) {
+      const llmConfig = resolveAiConfig(options.provider, options.model);
       if (!llmConfig) {
-        console.error("Error: --llm requires an API key. Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or AGENTSHIELD_API_KEY.");
+        console.error("Error: --ai requires an API key. Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or use --provider ollama.");
         process.exit(1);
       }
-      console.error(`🤖 Running LLM analysis with ${llmConfig.model}...`);
+      const providerLabel = options.provider || "auto";
+      console.error(`🤖 Running AI analysis (${providerLabel}/${llmConfig.model})...`);
       const { collectFiles } = await import("./scanner/files.js");
       const files = collectFiles(target);
       const llmFindings = await runLlmAnalysis(files, llmConfig);
       result.findings.push(...llmFindings);
-      // Recalculate score
       const { computeScore } = await import("./score.js");
       result.score = computeScore(result.findings);
     }
@@ -248,9 +250,30 @@ program
 program
   .command("discover")
   .description("Discover installed AI agents, MCP servers, and skills on this machine")
-  .action(() => {
+  .option("--json", "Output as JSON")
+  .option("--scan", "Auto-scan all discovered config and skill directories")
+  .action((options: { json?: boolean; scan?: boolean }) => {
     const agents = discoverAgents();
-    printDiscovery(agents);
+    if (options.json) {
+      console.log(JSON.stringify({ agents, totalAgents: agents.length, totalMcpServers: agents.reduce((s, a) => s + (a.mcpServerCount || 0), 0) }, null, 2));
+    } else {
+      printDiscovery(agents);
+    }
+    if (options.scan && agents.length > 0) {
+      console.log("\n🔍 Scanning discovered configurations...\n");
+      for (const agent of agents) {
+        const paths: string[] = [];
+        if (agent.configPath) paths.push(agent.configPath);
+        if (agent.skillsDir) paths.push(agent.skillsDir);
+        for (const p of paths) {
+          if (existsSync(p) && statSync(p).isDirectory()) {
+            console.log(`\n📁 ${agent.name}: ${p}`);
+            const result = scan(p);
+            printReport(result);
+          }
+        }
+      }
+    }
   });
 
 // Default: if first arg looks like a directory, treat as scan
