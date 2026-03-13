@@ -33,7 +33,7 @@ export const hiddenFilesRule: Rule = {
         if (pattern.test(basename)) {
           findings.push({
             rule: "hidden-files",
-            severity: "critical",
+            severity: "low",
             file: file.relativePath,
             message: `${desc} found in repository — should be in .gitignore`,
           });
@@ -44,7 +44,7 @@ export const hiddenFilesRule: Rule = {
             if (SECRET_IN_ENV_RE.test(line) && !line.trimStart().startsWith("#")) {
               findings.push({
                 rule: "hidden-files",
-                severity: "critical",
+                severity: "low",
                 file: file.relativePath,
                 line: i + 1,
                 message: "Hardcoded secret in environment file",

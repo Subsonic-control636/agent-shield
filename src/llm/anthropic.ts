@@ -67,7 +67,7 @@ function parseFindings(content: string): LlmFinding[] {
       .filter((item: unknown) => item && typeof item === "object")
       .map((item: Record<string, unknown>) => ({
         line: typeof item.line === "number" ? item.line : undefined,
-        severity: item.severity === "critical" ? "critical" as const : "warning" as const,
+        severity: item.severity === "high" ? "high" as const : "medium" as const,
         description: String(item.description || "LLM-detected prompt injection"),
         evidence: item.evidence ? String(item.evidence).slice(0, 120) : undefined,
       }));

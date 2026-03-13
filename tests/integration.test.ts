@@ -12,7 +12,7 @@ describe("integration: scan malicious-skill", () => {
   it("produces critical findings and low score", () => {
     const result = scan(resolve("tests/fixtures/malicious-skill"));
     assert.ok(result.findings.length > 0);
-    assert.ok(result.findings.some((f) => f.severity === "critical"));
+    assert.ok(result.findings.some((f) => f.severity === "high"));
     assert.ok(result.score < 50, `score ${result.score} should be < 50`);
     assert.ok(result.filesScanned >= 2);
     assert.ok(result.duration >= 0);
@@ -22,7 +22,7 @@ describe("integration: scan malicious-skill", () => {
 describe("integration: scan safe-skill", () => {
   it("produces high score with no critical findings", () => {
     const result = scan(resolve("tests/fixtures/safe-skill"));
-    assert.equal(result.findings.filter((f) => f.severity === "critical").length, 0);
+    assert.equal(result.findings.filter((f) => f.severity === "high").length, 0);
     assert.ok(result.score >= 80, `score ${result.score} should be >= 80`);
   });
 });
@@ -56,28 +56,28 @@ describe("score", () => {
 
   it("deducts 25 per critical", () => {
     const findings = [
-      { rule: "test", severity: "critical" as const, file: "a.ts", message: "bad" },
+      { rule: "test", severity: "high" as const, file: "a.ts", message: "bad" },
     ];
     assert.equal(computeScore(findings), 75);
   });
 
-  it("deducts 5 per warning (reduced — uncertain findings)", () => {
+  it("deducts 8 per medium risk", () => {
     const findings = [
-      { rule: "test", severity: "warning" as const, file: "a.ts", message: "meh" },
+      { rule: "test", severity: "medium" as const, file: "a.ts", message: "meh" },
     ];
-    assert.equal(computeScore(findings), 95);
+    assert.equal(computeScore(findings), 92);
   });
 
-  it("does not deduct for info", () => {
+  it("deducts 2 per low risk", () => {
     const findings = [
-      { rule: "test", severity: "info" as const, file: "a.ts", message: "ok" },
+      { rule: "test", severity: "low" as const, file: "a.ts", message: "ok" },
     ];
-    assert.equal(computeScore(findings), 100);
+    assert.equal(computeScore(findings), 98);
   });
 
   it("clamps to 0", () => {
     const findings = Array.from({ length: 10 }, () => ({
-      rule: "test", severity: "critical" as const, file: "a.ts", message: "bad",
+      rule: "test", severity: "high" as const, file: "a.ts", message: "bad",
     }));
     assert.equal(computeScore(findings), 0);
   });

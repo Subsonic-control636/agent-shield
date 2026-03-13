@@ -38,7 +38,7 @@ export const reverseShellRule: Rule = {
           if (pattern.test(line)) {
             findings.push({
               rule: "reverse-shell",
-              severity: "critical",
+              severity: "high",
               file: file.relativePath,
               line: i + 1,
               message: desc,

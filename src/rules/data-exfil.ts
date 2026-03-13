@@ -44,7 +44,7 @@ export const dataExfilRule: Rule = {
         if (readLines.length > 0 && sendLines.length > 0) {
           findings.push({
             rule: "data-exfil",
-            severity: "critical",
+            severity: "high",
             file: file.relativePath,
             line: sendLines[0],
             message: `Reads sensitive data (line ${readLines.join(",")}) and sends HTTP request (line ${sendLines.join(",")}) — possible exfiltration`,
@@ -59,7 +59,7 @@ export const dataExfilRule: Rule = {
         if (DYNAMIC_URL_RE.test(line)) {
           findings.push({
             rule: "data-exfil",
-            severity: "warning",
+            severity: "medium",
             file: file.relativePath,
             line: i + 1,
             message: "Dynamic URL construction in HTTP request — potential SSRF",

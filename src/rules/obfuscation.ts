@@ -8,14 +8,14 @@ import type { Rule, Finding, ScannedFile } from "../types.js";
 const OBFUSCATION_PATTERNS: Array<{
   pattern: RegExp;
   desc: string;
-  severity: "critical" | "warning";
+  severity: "high" | "medium";
 }> = [
-  { pattern: /atob\s*\(.*\beval\b|eval\s*\(.*\batob\b/, desc: "atob() + eval() combo", severity: "critical" },
-  { pattern: /Buffer\.from\s*\([^)]*,\s*["']base64["']\).*\beval\b/, desc: "Base64 decode + eval()", severity: "critical" },
-  { pattern: /Buffer\.from\s*\([^)]*,\s*["']base64["']\).*\bexec\b/, desc: "Base64 decode + exec()", severity: "critical" },
-  { pattern: /\bString\.fromCharCode\s*\(/, desc: "String.fromCharCode() — potential obfuscation", severity: "warning" },
-  { pattern: /\\x[0-9a-f]{2}\\x[0-9a-f]{2}\\x[0-9a-f]{2}/, desc: "Hex-encoded string sequence", severity: "warning" },
-  { pattern: /\\u00[0-9a-f]{2}\\u00[0-9a-f]{2}/, desc: "Unicode-escaped string sequence", severity: "warning" },
+  { pattern: /atob\s*\(.*\beval\b|eval\s*\(.*\batob\b/, desc: "atob() + eval() combo", severity: "high" },
+  { pattern: /Buffer\.from\s*\([^)]*,\s*["']base64["']\).*\beval\b/, desc: "Base64 decode + eval()", severity: "high" },
+  { pattern: /Buffer\.from\s*\([^)]*,\s*["']base64["']\).*\bexec\b/, desc: "Base64 decode + exec()", severity: "high" },
+  { pattern: /\bString\.fromCharCode\s*\(/, desc: "String.fromCharCode() — potential obfuscation", severity: "medium" },
+  { pattern: /\\x[0-9a-f]{2}\\x[0-9a-f]{2}\\x[0-9a-f]{2}/, desc: "Hex-encoded string sequence", severity: "medium" },
+  { pattern: /\\u00[0-9a-f]{2}\\u00[0-9a-f]{2}/, desc: "Unicode-escaped string sequence", severity: "medium" },
 ];
 
 export const obfuscationRule: Rule = {

@@ -5,19 +5,19 @@ import type { Rule, Finding, ScannedFile } from "../types.js";
  * Detects Server-Side Request Forgery patterns — user-controlled URLs in HTTP requests.
  */
 
-const SSRF_PATTERNS: Array<{ pattern: RegExp; desc: string; severity: "critical" | "warning" }> = [
+const SSRF_PATTERNS: Array<{ pattern: RegExp; desc: string; severity: "medium" | "medium" }> = [
   // Template literals in fetch/request
-  { pattern: /fetch\s*\(\s*`[^`]*\$\{/, desc: "fetch() with template literal URL — potential SSRF", severity: "warning" },
-  { pattern: /axios\.\w+\s*\(\s*`[^`]*\$\{/, desc: "axios with template literal URL — potential SSRF", severity: "warning" },
-  { pattern: /http\.request\s*\(\s*`[^`]*\$\{/, desc: "http.request with template literal URL — potential SSRF", severity: "warning" },
+  { pattern: /fetch\s*\(\s*`[^`]*\$\{/, desc: "fetch() with template literal URL — potential SSRF", severity: "medium" },
+  { pattern: /axios\.\w+\s*\(\s*`[^`]*\$\{/, desc: "axios with template literal URL — potential SSRF", severity: "medium" },
+  { pattern: /http\.request\s*\(\s*`[^`]*\$\{/, desc: "http.request with template literal URL — potential SSRF", severity: "medium" },
   // URL constructed from user input
-  { pattern: /new\s+URL\s*\(\s*(?:req\.|request\.|params\.|query\.|body\.)/, desc: "URL from request parameters — potential SSRF", severity: "critical" },
-  { pattern: /fetch\s*\(\s*(?:req\.|request\.|params\.|query\.|body\.)/, desc: "fetch() with request parameter — potential SSRF", severity: "critical" },
+  { pattern: /new\s+URL\s*\(\s*(?:req\.|request\.|params\.|query\.|body\.)/, desc: "URL from request parameters — potential SSRF", severity: "medium" },
+  { pattern: /fetch\s*\(\s*(?:req\.|request\.|params\.|query\.|body\.)/, desc: "fetch() with request parameter — potential SSRF", severity: "medium" },
   // Redirect to user-controlled URL
-  { pattern: /redirect\s*\(\s*(?:req\.|request\.|params\.|query\.)/, desc: "Open redirect — user-controlled redirect URL", severity: "warning" },
+  { pattern: /redirect\s*\(\s*(?:req\.|request\.|params\.|query\.)/, desc: "Open redirect — user-controlled redirect URL", severity: "medium" },
   // Internal network access patterns
-  { pattern: /127\.0\.0\.1|0\.0\.0\.0|localhost.*fetch|fetch.*localhost/i, desc: "Request to localhost — verify if intentional", severity: "warning" },
-  { pattern: /169\.254\.169\.254/, desc: "AWS metadata endpoint access — potential SSRF", severity: "critical" },
+  { pattern: /127\.0\.0\.1|0\.0\.0\.0|localhost.*fetch|fetch.*localhost/i, desc: "Request to localhost — verify if intentional", severity: "medium" },
+  { pattern: /169\.254\.169\.254/, desc: "AWS metadata endpoint access — potential SSRF", severity: "medium" },
 ];
 
 export const networkSsrfRule: Rule = {

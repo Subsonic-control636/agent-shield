@@ -41,8 +41,8 @@ function runBenchmark() {
       f.file === "MCP configuration" || f.file.includes("—")
     );
     const allFindings = [...fileFindings, ...(file.endsWith(".json") ? crossFileFindings : [])];
-    const criticals = allFindings.filter(f => f.severity === "critical" && !f.possibleFalsePositive);
-    const warnings = allFindings.filter(f => f.severity === "warning" && !f.possibleFalsePositive);
+    const criticals = allFindings.filter(f => f.severity === "high" && !f.possibleFalsePositive);
+    const warnings = allFindings.filter(f => f.severity === "medium" && !f.possibleFalsePositive);
     const detected = allFindings.length > 0;
     const rules = [...new Set(fileFindings.map(f => f.rule))];
 
@@ -68,8 +68,8 @@ function runBenchmark() {
 
   for (const file of benignFiles) {
     const fileFindings = benignResult.findings.filter(f => f.file.includes(file));
-    const criticals = fileFindings.filter(f => f.severity === "critical" && !f.possibleFalsePositive);
-    const warnings = fileFindings.filter(f => f.severity === "warning" && !f.possibleFalsePositive);
+    const criticals = fileFindings.filter(f => f.severity === "high" && !f.possibleFalsePositive);
+    const warnings = fileFindings.filter(f => f.severity === "medium" && !f.possibleFalsePositive);
     const falsePositive = criticals.length > 0;
     const rules = [...new Set(fileFindings.map(f => f.rule))];
 

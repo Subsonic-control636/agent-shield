@@ -1,5 +1,5 @@
-/** Severity levels for findings */
-export type Severity = "critical" | "warning" | "info";
+/** Severity levels for findings — three-tier risk system */
+export type Severity = "high" | "medium" | "low";
 
 /** Confidence levels for findings */
 export type Confidence = "high" | "medium" | "low";
@@ -66,7 +66,7 @@ export interface ScanConfig {
     enable?: string[];
     disable?: string[];
   };
-  severity?: Record<string, "critical" | "warning" | "info">;
+  severity?: Record<string, "high" | "medium" | "low">;
   failUnder?: number;
   ignore?: string[];
 }

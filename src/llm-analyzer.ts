@@ -21,7 +21,7 @@ Check for:
 10. Supply chain risks — suspicious dependencies, typosquatting
 
 For each finding, respond with a JSON array:
-{"findings": [{"line": <number>, "severity": "critical"|"warning", "description": "<what>", "evidence": "<text>"}]}
+{"findings": [{"line": <number>, "severity": "high"|"medium", "description": "<what>", "evidence": "<text>"}]}
 
 If no issues: {"findings": []}
 
@@ -136,7 +136,7 @@ export async function llmAnalyzeFile(
 
     return parsed.findings.map((f) => ({
       rule: "prompt-injection-llm",
-      severity: (f.severity === "critical" ? "critical" : "warning") as "critical" | "warning",
+      severity: (f.severity === "high" ? "high" : "medium") as "high" | "medium",
       file: file.relativePath,
       line: f.line,
       message: `[LLM] ${f.description}`,

@@ -3,31 +3,45 @@ import type { ScanResult, Finding } from "../types.js";
 import { riskLabel } from "../score.js";
 
 const SEVERITY_ICON: Record<string, string> = {
-  critical: chalk.red("🔴 CONFIRMED"),
-  warning: chalk.yellow("🟡 UNCERTAIN"),
-  info: chalk.blue("ℹ️  NOTE"),
+  high: chalk.red("🔴 High Risk"),
+  medium: chalk.yellow("🟡 Medium Risk"),
+  low: chalk.green("🟢 Low Risk"),
 };
 
 const SEVERITY_LINE: Record<string, (s: string) => string> = {
-  critical: chalk.red,
-  warning: chalk.yellow,
-  info: chalk.dim,
+  high: chalk.red,
+  medium: chalk.yellow,
+  low: chalk.green,
 };
 
 export function printReport(result: ScanResult): void {
   const { target, filesScanned, linesScanned, findings, score, duration } = result;
 
   console.log();
-  console.log(chalk.bold("🛡️  AgentShield Security Report"));
+  console.log(chalk.bold("🛡️  AgentShield Scan Report"));
   console.log(
     chalk.dim(`📁 Scanned: ${target} (${filesScanned} files, ${formatLines(linesScanned)})`),
   );
   console.log();
 
-  // Group by severity
-  const bySeverity = groupBy(findings, (f) => f.severity);
+  // Summary line first
+  const high = findings.filter(f => f.severity === "high" && !f.possibleFalsePositive).length;
+  const medium = findings.filter(f => f.severity === "medium" && !f.possibleFalsePositive).length;
+  const low = findings.filter(f => f.severity === "low" && !f.possibleFalsePositive).length;
 
-  for (const severity of ["critical", "warning", "info"] as const) {
+  const scoreColor = score >= 90 ? chalk.green : score >= 70 ? chalk.yellow : score >= 40 ? chalk.hex("#FF8800") : chalk.red;
+  console.log(scoreColor(`Score: ${score}/100 (${riskLabel(score)})`));
+  console.log();
+
+  if (high > 0) console.log(chalk.red(`🔴 High Risk: ${high} finding${high > 1 ? "s" : ""}`));
+  if (medium > 0) console.log(chalk.yellow(`🟡 Medium Risk: ${medium} finding${medium > 1 ? "s" : ""}`));
+  if (low > 0) console.log(chalk.green(`🟢 Low Risk: ${low} finding${low > 1 ? "s" : ""}`));
+  console.log();
+
+  // Group by severity, ordered high → medium → low
+  const bySeverity = groupBy(findings.filter(f => !f.possibleFalsePositive), (f) => f.severity);
+
+  for (const severity of ["high", "medium", "low"] as const) {
     const group = bySeverity[severity];
     if (!group || group.length === 0) continue;
 
@@ -37,12 +51,8 @@ export function printReport(result: ScanResult): void {
       const prefix = i < group.length - 1 ? "  ├─" : "  └─";
       const loc = f.line ? `${f.file}:${f.line}` : f.file;
       const colorize = SEVERITY_LINE[f.severity] || chalk.white;
-      const confLabel = f.confidence === "high" ? "" : f.confidence === "medium" ? " [medium confidence]" : " [needs review]";
+      const confLabel = f.confidence === "high" ? "" : f.confidence === "medium" ? " [medium confidence]" : f.confidence === "low" ? " [needs review]" : "";
       console.log(colorize(`${prefix} ${loc} — [${f.rule}] ${f.message}${confLabel}`));
-      if (f.possibleFalsePositive) {
-        const fpPrefix = i < group.length - 1 ? "  │  " : "     ";
-        console.log(chalk.dim(`${fpPrefix}⚠️  Likely false positive: ${f.falsePositiveReason}`));
-      }
       if (f.evidence) {
         const ePrefix = i < group.length - 1 ? "  │  " : "     ";
         console.log(chalk.dim(`${ePrefix}${f.evidence}`));
@@ -51,9 +61,13 @@ export function printReport(result: ScanResult): void {
     console.log();
   }
 
-  // Score
-  const scoreColor = score >= 90 ? chalk.green : score >= 70 ? chalk.yellow : score >= 40 ? chalk.hex("#FF8800") : chalk.red;
-  console.log(scoreColor(`✅ Score: ${score}/100 (${riskLabel(score)})`));
+  // FP section (collapsed)
+  const fpFindings = findings.filter(f => f.possibleFalsePositive);
+  if (fpFindings.length > 0) {
+    console.log(chalk.dim(`ℹ️  ${fpFindings.length} possible false positive${fpFindings.length > 1 ? "s" : ""} suppressed (use --show-fp to display)`));
+    console.log();
+  }
+
   console.log(chalk.dim(`⏱  ${duration}ms`));
   console.log();
 }

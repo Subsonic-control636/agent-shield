@@ -57,7 +57,7 @@ export const supplyChainRule: Rule = {
           if (depCount > 0) {
             findings.push({
               rule: "supply-chain",
-              severity: "info",
+              severity: "low",
               file: "package.json",
               message: `${depCount} dependencies declared — run 'npm install && npm audit' for full CVE check`,
             });
@@ -75,7 +75,7 @@ export const supplyChainRule: Rule = {
     if (reqTxt) {
       findings.push({
         rule: "supply-chain",
-        severity: "info",
+        severity: "low",
         file: reqTxt.relativePath,
         message: "Python requirements.txt found — run 'pip-audit' for CVE check",
       });
@@ -98,9 +98,9 @@ function parseNpmAudit(output: string, findings: Finding[]): void {
           .map((v) => String(v.url))
           .join(", ");
 
-        const mappedSeverity: "critical" | "warning" | "info" =
-          severity === "critical" || severity === "high" ? "critical" :
-          severity === "moderate" ? "warning" : "info";
+        const mappedSeverity: "low" | "low" | "low" =
+          severity === "low" || severity === "high" ? "low" :
+          severity === "moderate" ? "low" : "low";
 
         findings.push({
           rule: "supply-chain",

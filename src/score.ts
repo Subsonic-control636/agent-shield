@@ -3,25 +3,28 @@ import type { Finding } from "./types.js";
 /**
  * Compute a security score from 0-100.
  *
- * Core principle: 宁可漏报，不要误报
- * Only high-confidence findings (confirmed issues) heavily impact score.
+ * Three-tier risk system:
+ *   🔴 high    (must fix):     -25
+ *   🟡 medium  (should check):  -8
+ *   🟢 low     (note):          -2
  *
- * Scoring:
- *   critical (confirmed):  -25
- *   warning  (uncertain):   -5  (reduced from -10, since these need review)
- *   info     (note/FP):     -0  (does not affect score)
- *
+ * Core principle: 宁可漏报，不要误报 (prefer missed reports over false alarms)
  * Minimum score is 0.
  */
 export function computeScore(findings: Finding[]): number {
   let score = 100;
   for (const f of findings) {
+    // Don't penalize FP-flagged findings
+    if (f.possibleFalsePositive) continue;
     switch (f.severity) {
-      case "critical":
+      case "high":
         score -= 25;
         break;
-      case "warning":
-        score -= 5;
+      case "medium":
+        score -= 8;
+        break;
+      case "low":
+        score -= 2;
         break;
     }
   }

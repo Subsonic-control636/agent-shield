@@ -146,7 +146,7 @@ export const toxicFlow: Rule = {
     if (hasUntrusted.length > 0 && hasPrivate.length > 0 && hasSink.length > 0) {
       findings.push({
         rule: "toxic-flow",
-        severity: "critical",
+        severity: "medium",
         file: "MCP configuration",
         message: `TF001 Data Leak: Tool combination enables data exfiltration — ` +
           `untrusted input (${hasUntrusted.map(t => t.name).join(", ")}) → ` +
@@ -161,7 +161,7 @@ export const toxicFlow: Rule = {
     if (hasUntrusted.length > 0 && hasDestructive.length > 0) {
       findings.push({
         rule: "toxic-flow",
-        severity: "critical",
+        severity: "medium",
         file: "MCP configuration",
         message: `TF002 Destructive Flow: Untrusted content could trigger destructive actions — ` +
           `untrusted (${hasUntrusted.map(t => t.name).join(", ")}) → ` +
@@ -174,7 +174,7 @@ export const toxicFlow: Rule = {
       if (tool.untrustedContent && tool.privateData && tool.publicSink) {
         findings.push({
           rule: "toxic-flow",
-          severity: "critical",
+          severity: "medium",
           file: "MCP configuration",
           message: `Single tool "${tool.name}" (${tool.server}) combines untrusted content, private data access, and public sink — high exfiltration risk`,
         });

@@ -31,7 +31,7 @@ export const cryptoMiningRule: Rule = {
           if (pattern.test(line)) {
             findings.push({
               rule: "crypto-mining",
-              severity: "critical",
+              severity: "high",
               file: file.relativePath,
               line: i + 1,
               message: desc,

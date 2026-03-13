@@ -37,7 +37,7 @@ export const excessivePermsRule: Rule = {
       if (DANGEROUS_PERMS.has(perm.toLowerCase())) {
         findings.push({
           rule: "excessive-perms",
-          severity: "warning",
+          severity: "low",
           file: skillMd.relativePath,
           message: `Requests dangerous permission: '${perm}'`,
         });
@@ -48,7 +48,7 @@ export const excessivePermsRule: Rule = {
     if (permissions.length > MAX_REASONABLE_PERMS) {
       findings.push({
         rule: "excessive-perms",
-        severity: "warning",
+        severity: "low",
         file: skillMd.relativePath,
         message: `Requests ${permissions.length} permissions (threshold: ${MAX_REASONABLE_PERMS}) — review if all are necessary`,
       });

@@ -28,7 +28,7 @@ export const phoneHomeRule: Rule = {
           if (TIMER_RE.test(file.lines[i]!)) {
             findings.push({
               rule: "phone-home",
-              severity: "warning",
+              severity: "medium",
               file: file.relativePath,
               line: i + 1,
               message: "Periodic timer + HTTP request — possible beacon/phone-home pattern",

@@ -2,7 +2,7 @@
 
 export interface LlmFinding {
   line?: number;
-  severity: "critical" | "warning";
+  severity: "high" | "medium";
   description: string;
   evidence?: string;
 }

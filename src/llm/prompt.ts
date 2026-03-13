@@ -16,7 +16,7 @@ IMPORTANT:
 - Be precise about line numbers.
 
 Respond with ONLY a JSON array. Each element:
-{"line": <number or null>, "severity": "critical" | "warning", "description": "<what the injection does>", "evidence": "<the suspicious text, max 120 chars>"}
+{"line": <number or null>, "severity": "high" | "medium", "description": "<what the injection does>", "evidence": "<the suspicious text, max 120 chars>"}
 
 If no injection found, respond with: []`;
 

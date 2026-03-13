@@ -10,7 +10,7 @@ export interface ScanConfig {
     disable?: string[];
   };
   /** Severity overrides: rule-id → severity */
-  severity?: Record<string, "critical" | "warning" | "info">;
+  severity?: Record<string, "high" | "medium" | "low">;
   /** Score threshold for CI (same as --fail-under) */
   failUnder?: number;
   /** Glob patterns to ignore */

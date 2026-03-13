@@ -35,7 +35,7 @@ export const envLeakRule: Rule = {
         if (envLines.length > 0 && sendLines.length > 0) {
           findings.push({
             rule: "env-leak",
-            severity: "critical",
+            severity: "medium",
             file: file.relativePath,
             line: sendLines[0],
             message: `Reads environment variables (line ${envLines.join(",")}) and sends HTTP request (line ${sendLines.join(",")}) — possible env leak`,

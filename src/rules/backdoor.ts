@@ -8,30 +8,30 @@ import type { Rule, Finding, ScannedFile } from "../types.js";
 const BACKDOOR_PATTERNS: Array<{
   pattern: RegExp;
   desc: string;
-  severity: "critical" | "warning";
+  severity: "high" | "medium";
 }> = [
   // JavaScript/TypeScript
-  { pattern: /\beval\s*\(/, desc: "eval() with dynamic input", severity: "critical" },
-  { pattern: /new\s+Function\s*\(/, desc: "new Function() constructor", severity: "critical" },
-  { pattern: /child_process\s*\.\s*exec\s*\(/, desc: "child_process.exec() — use execFile instead", severity: "critical" },
-  { pattern: /child_process\s*\.\s*spawn\s*\(.*\bshell\s*:\s*true/, desc: "spawn() with shell: true", severity: "critical" },
-  { pattern: /execSync\s*\(\s*`/, desc: "execSync() with template literal", severity: "critical" },
-  { pattern: /execSync\s*\(\s*[^"']/, desc: "execSync() with dynamic string", severity: "warning" },
-  { pattern: /require\s*\(\s*[^"'`]/, desc: "dynamic require()", severity: "warning" },
-  { pattern: /import\s*\(\s*[^"'`]/, desc: "dynamic import()", severity: "warning" },
+  { pattern: /\beval\s*\(/, desc: "eval() with dynamic input", severity: "high" },
+  { pattern: /new\s+Function\s*\(/, desc: "new Function() constructor", severity: "high" },
+  { pattern: /child_process\s*\.\s*exec\s*\(/, desc: "child_process.exec() — use execFile instead", severity: "high" },
+  { pattern: /child_process\s*\.\s*spawn\s*\(.*\bshell\s*:\s*true/, desc: "spawn() with shell: true", severity: "high" },
+  { pattern: /execSync\s*\(\s*`/, desc: "execSync() with template literal", severity: "high" },
+  { pattern: /execSync\s*\(\s*[^"']/, desc: "execSync() with dynamic string", severity: "medium" },
+  { pattern: /require\s*\(\s*[^"'`]/, desc: "dynamic require()", severity: "medium" },
+  { pattern: /import\s*\(\s*[^"'`]/, desc: "dynamic import()", severity: "medium" },
 
   // Python
-  { pattern: /\bexec\s*\(\s*[^"']/, desc: "Python exec() with dynamic input", severity: "critical" },
-  { pattern: /\bos\.system\s*\(/, desc: "os.system() — use subprocess.run instead", severity: "critical" },
-  { pattern: /subprocess\.call\s*\(\s*[^[\]].*shell\s*=\s*True/, desc: "subprocess with shell=True", severity: "critical" },
-  { pattern: /\b__import__\s*\(/, desc: "dynamic __import__()", severity: "warning" },
+  { pattern: /\bexec\s*\(\s*[^"']/, desc: "Python exec() with dynamic input", severity: "high" },
+  { pattern: /\bos\.system\s*\(/, desc: "os.system() — use subprocess.run instead", severity: "high" },
+  { pattern: /subprocess\.call\s*\(\s*[^[\]].*shell\s*=\s*True/, desc: "subprocess with shell=True", severity: "high" },
+  { pattern: /\b__import__\s*\(/, desc: "dynamic __import__()", severity: "medium" },
 
   // Shell
-  { pattern: /\$\(curl\s/, desc: "command substitution with curl", severity: "critical" },
-  { pattern: /\beval\s+\$/, desc: "shell eval with variable", severity: "critical" },
-  { pattern: /bash\s+-c\s+\$/, desc: "bash -c with variable", severity: "critical" },
-  { pattern: /(?:curl|wget)\s+[^|]*\|\s*(?:bash|sh|zsh|python|node|perl)/, desc: "pipe-to-shell: downloads and executes remote code", severity: "critical" },
-  { pattern: /(?:curl|wget)\s+.*-o\s+\S+\s*&&\s*chmod\s+\+x/, desc: "download, chmod +x, execute pattern", severity: "critical" },
+  { pattern: /\$\(curl\s/, desc: "command substitution with curl", severity: "high" },
+  { pattern: /\beval\s+\$/, desc: "shell eval with variable", severity: "high" },
+  { pattern: /bash\s+-c\s+\$/, desc: "bash -c with variable", severity: "high" },
+  { pattern: /(?:curl|wget)\s+[^|]*\|\s*(?:bash|sh|zsh|python|node|perl)/, desc: "pipe-to-shell: downloads and executes remote code", severity: "high" },
+  { pattern: /(?:curl|wget)\s+.*-o\s+\S+\s*&&\s*chmod\s+\+x/, desc: "download, chmod +x, execute pattern", severity: "high" },
 ];
 
 export const backdoorRule: Rule = {

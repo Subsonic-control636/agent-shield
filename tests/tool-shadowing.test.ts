@@ -24,7 +24,7 @@ describe("tool-shadowing: cross-tool references", () => {
     const findings = toolShadowing.run([file]);
     assert.ok(findings.length > 0);
     assert.equal(findings[0]!.rule, "tool-shadowing");
-    assert.equal(findings[0]!.severity, "critical");
+    assert.equal(findings[0]!.severity, "medium");
   });
 
   it("detects 'enhanced version of read_file'", () => {

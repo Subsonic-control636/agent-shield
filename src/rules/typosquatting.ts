@@ -48,7 +48,7 @@ export const typosquattingRule: Rule = {
           if (typos.includes(depName.toLowerCase())) {
             findings.push({
               rule: "typosquatting",
-              severity: "critical",
+              severity: "low",
               file: pkgJson.relativePath,
               message: `Suspicious package "${depName}" — possible typosquat of "${legitimate}"`,
             });

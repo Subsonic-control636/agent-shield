@@ -32,7 +32,7 @@ export const privilegeRule: Rule = {
       // No SKILL.md — can't check permissions
       findings.push({
         rule: "privilege",
-        severity: "info",
+        severity: "low",
         file: ".",
         message: "No SKILL.md found — permission analysis skipped",
       });
@@ -91,7 +91,7 @@ export const privilegeRule: Rule = {
         const first = locations[0];
         findings.push({
           rule: "privilege",
-          severity: "warning",
+          severity: "low",
           file: first?.file || skillMd.relativePath,
           line: first?.line,
           message: `Code uses '${cap}' capability but SKILL.md doesn't declare it (found in ${locations.length} location${locations.length > 1 ? "s" : ""})`,
@@ -104,7 +104,7 @@ export const privilegeRule: Rule = {
       if (!usedCapabilities.has(perm) && CAPABILITY_PATTERNS[perm]) {
         findings.push({
           rule: "privilege",
-          severity: "info",
+          severity: "low",
           file: skillMd.relativePath,
           message: `SKILL.md declares '${perm}' permission but code doesn't appear to use it`,
         });
@@ -115,7 +115,7 @@ export const privilegeRule: Rule = {
     if (usedCapabilities.size > 0) {
       findings.push({
         rule: "privilege",
-        severity: "info",
+        severity: "low",
         file: skillMd.relativePath,
         message: `Detected capabilities: ${[...usedCapabilities].join(", ")}`,
       });

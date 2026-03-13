@@ -42,7 +42,7 @@ export const sensitiveReadRule: Rule = {
           if (pattern.test(line)) {
             findings.push({
               rule: "sensitive-read",
-              severity: "warning",
+              severity: "low",
               file: file.relativePath,
               line: i + 1,
               message: `Accesses ${desc}`,

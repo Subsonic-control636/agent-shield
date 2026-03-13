@@ -21,7 +21,7 @@ describe("mcp-manifest", () => {
       makeFile("mcp.json", JSON.stringify({ permissions: ["*"] })),
     ];
     const findings = mcpManifestRule.run(files);
-    const critical = findings.filter((f) => f.severity === "critical" && f.message.includes("wildcard"));
+    const critical = findings.filter((f) => f.severity === "low" && f.message.includes("wildcard"));
     assert.ok(critical.length > 0, "Should flag wildcard permissions");
   });
 
@@ -68,7 +68,7 @@ server.tool("greet", "Say hello to the user", async ({ name }) => {
 `),
     ];
     const findings = mcpManifestRule.run(files);
-    const critical = findings.filter((f) => f.severity === "critical");
+    const critical = findings.filter((f) => f.severity === "low");
     assert.strictEqual(critical.length, 0, "Safe MCP server should have no critical findings");
   });
 

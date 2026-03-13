@@ -82,10 +82,10 @@ function postProcess(findings: Finding[], files: ScannedFile[], config: ScanConf
       if (fpRules?.has(finding.rule)) {
         finding.possibleFalsePositive = true;
         finding.falsePositiveReason = FP_CONTEXTS[file.context]!;
-        if (finding.severity === "critical") {
-          finding.severity = "warning";
-        } else if (finding.severity === "warning") {
-          finding.severity = "info";
+        if (finding.severity === "high") {
+          finding.severity = "medium";
+        } else if (finding.severity === "medium") {
+          finding.severity = "low";
         }
       }
     }
@@ -110,10 +110,10 @@ function postProcess(findings: Finding[], files: ScannedFile[], config: ScanConf
         if (codeAnalysisRules.has(finding.rule)) {
           finding.possibleFalsePositive = true;
           finding.falsePositiveReason = "Security tool source code — pattern definitions are not actual vulnerabilities";
-          if (finding.severity === "critical") {
-            finding.severity = "info";
-          } else if (finding.severity === "warning") {
-            finding.severity = "info";
+          if (finding.severity === "high") {
+            finding.severity = "low";
+          } else if (finding.severity === "medium") {
+            finding.severity = "low";
           }
         }
       }
@@ -126,7 +126,7 @@ function postProcess(findings: Finding[], files: ScannedFile[], config: ScanConf
       if (isRegexDef && !finding.possibleFalsePositive) {
         finding.possibleFalsePositive = true;
         finding.falsePositiveReason = "Pattern definition — regex/string constant, not executable code";
-        if (finding.severity !== "info") finding.severity = "info";
+        if (finding.severity !== "low") finding.severity = "low";
       }
     }
   }
@@ -152,20 +152,20 @@ function postProcess(findings: Finding[], files: ScannedFile[], config: ScanConf
 
     // Enforce: low confidence → info (does not affect score)
     if (finding.confidence === "low") {
-      finding.severity = "info";
+      finding.severity = "low";
     }
     // Medium confidence → warning at most (never critical)
-    if (finding.confidence === "medium" && finding.severity === "critical") {
-      finding.severity = "warning";
+    if (finding.confidence === "medium" && finding.severity === "high") {
+      finding.severity = "medium";
     }
     // FP → always info
     if (finding.possibleFalsePositive) {
-      finding.severity = "info";
+      finding.severity = "low";
     }
   }
 
-  const severityOrder = { critical: 0, warning: 1, info: 2 };
-  findings.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+  const severityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  findings.sort((a, b) => (severityOrder[a.severity] ?? 3) - (severityOrder[b.severity] ?? 3));
 }
 
 /** Classify finding confidence based on evidence quality and context */
@@ -286,7 +286,7 @@ export async function scanWithLlm(
       // LLM failure is non-fatal — fallback to regex-only
       findings.push({
         rule: "prompt-injection-llm",
-        severity: "info",
+        severity: "low",
         file: file.relativePath,
         message: `LLM analysis skipped: ${(err as Error).message?.slice(0, 80) || "unknown error"}`,
       });

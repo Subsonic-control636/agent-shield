@@ -46,7 +46,7 @@ export const credentialHardcodeRule: Rule = {
           if (pattern.test(line)) {
             findings.push({
               rule: "credential-hardcode",
-              severity: "critical",
+              severity: "high",
               file: file.relativePath,
               line: i + 1,
               message: desc,

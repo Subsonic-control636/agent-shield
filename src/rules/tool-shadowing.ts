@@ -58,7 +58,7 @@ export const toolShadowing: Rule = {
             if (pattern.test(line)) {
               findings.push({
                 rule: "tool-shadowing",
-                severity: "critical",
+                severity: "medium",
                 file: file.relativePath,
                 line: i + 1,
                 message: `Tool shadowing: ${description}`,
@@ -77,7 +77,7 @@ export const toolShadowing: Rule = {
             ) {
               findings.push({
                 rule: "tool-shadowing",
-                severity: "critical",
+                severity: "medium",
                 file: file.relativePath,
                 line: i + 1,
                 message: `References well-known tool "${toolName}" with override intent`,
@@ -103,7 +103,7 @@ export const toolShadowing: Rule = {
       if (servers.length > 1) {
         findings.push({
           rule: "tool-shadowing",
-          severity: "critical",
+          severity: "medium",
           file: servers[0]!,
           message: `Tool name conflict: "${toolName}" defined in ${servers.length} servers (${servers.join(", ")}) — potential tool shadowing attack`,
         });

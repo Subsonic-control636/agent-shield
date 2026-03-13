@@ -20,13 +20,13 @@ const RESOURCE_REGISTER_RE =
   /\.resource\s*\(|addResource\s*\(|registerResource\s*\(|server\.setRequestHandler.*ListResources|resources:\s*\[/;
 
 // Dangerous patterns in tool implementations
-const DANGEROUS_TOOL_PATTERNS: Array<{ pattern: RegExp; desc: string; severity: "critical" | "warning" }> = [
-  { pattern: /child_process|execSync|exec\(|spawn\(/, desc: "Tool executes shell commands", severity: "critical" },
-  { pattern: /fs\.unlink|fs\.rmdir|fs\.rm\b|rimraf/, desc: "Tool deletes files", severity: "warning" },
-  { pattern: /fs\.writeFile|fs\.appendFile|fs\.createWriteStream/, desc: "Tool writes to file system", severity: "warning" },
-  { pattern: /fetch\s*\(|axios|http\.request|https\.request/, desc: "Tool makes outbound HTTP requests", severity: "warning" },
-  { pattern: /eval\s*\(|new\s+Function\s*\(/, desc: "Tool uses dynamic code execution", severity: "critical" },
-  { pattern: /\.ssh|\.aws|\.env\b|credentials|secret/i, desc: "Tool accesses sensitive paths/credentials", severity: "critical" },
+const DANGEROUS_TOOL_PATTERNS: Array<{ pattern: RegExp; desc: string; severity: "low" | "low" }> = [
+  { pattern: /child_process|execSync|exec\(|spawn\(/, desc: "Tool executes shell commands", severity: "low" },
+  { pattern: /fs\.unlink|fs\.rmdir|fs\.rm\b|rimraf/, desc: "Tool deletes files", severity: "low" },
+  { pattern: /fs\.writeFile|fs\.appendFile|fs\.createWriteStream/, desc: "Tool writes to file system", severity: "low" },
+  { pattern: /fetch\s*\(|axios|http\.request|https\.request/, desc: "Tool makes outbound HTTP requests", severity: "low" },
+  { pattern: /eval\s*\(|new\s+Function\s*\(/, desc: "Tool uses dynamic code execution", severity: "low" },
+  { pattern: /\.ssh|\.aws|\.env\b|credentials|secret/i, desc: "Tool accesses sensitive paths/credentials", severity: "low" },
 ];
 
 // Suspicious tool name/description patterns
@@ -138,7 +138,7 @@ function checkMcpConfig(files: ScannedFile[], findings: Finding[]): void {
         if (perms.length > 5) {
           findings.push({
             rule: "mcp-manifest",
-            severity: "warning",
+            severity: "low",
             file: mcpConfig.relativePath,
             message: `MCP config declares ${perms.length} permissions — consider reducing scope`,
           });
@@ -150,7 +150,7 @@ function checkMcpConfig(files: ScannedFile[], findings: Finding[]): void {
       if (configStr.includes('"*"') || configStr.includes('"all"')) {
         findings.push({
           rule: "mcp-manifest",
-          severity: "critical",
+          severity: "low",
           file: mcpConfig.relativePath,
           message: "MCP config uses wildcard/all permissions",
         });
@@ -158,7 +158,7 @@ function checkMcpConfig(files: ScannedFile[], findings: Finding[]): void {
     } catch {
       findings.push({
         rule: "mcp-manifest",
-        severity: "warning",
+        severity: "low",
         file: mcpConfig.relativePath,
         message: "Invalid JSON in MCP config file",
       });
@@ -213,7 +213,7 @@ function checkToolDescriptions(files: ScannedFile[], findings: Finding[]): void 
         if (pattern.test(line)) {
           findings.push({
             rule: "mcp-manifest",
-            severity: "warning",
+            severity: "low",
             file: file.relativePath,
             line: i + 1,
             message: `Suspicious MCP tool description: ${desc}`,
@@ -242,7 +242,7 @@ function checkInputValidation(files: ScannedFile[], findings: Finding[]): void {
     if (hasPathInput && !hasPathValidation && !hasTraversalCheck) {
       findings.push({
         rule: "mcp-manifest",
-        severity: "warning",
+        severity: "low",
         file: file.relativePath,
         message: "MCP tool accepts path inputs but has no visible path validation/sanitization",
       });
@@ -266,7 +266,7 @@ function checkDynamicToolLoading(files: ScannedFile[], findings: Finding[]): voi
         if (pattern.test(line)) {
           findings.push({
             rule: "mcp-manifest",
-            severity: "critical",
+            severity: "low",
             file: file.relativePath,
             line: i + 1,
             message: `Dynamic tool loading: ${desc}`,
@@ -298,14 +298,14 @@ function checkEntityCount(files: ScannedFile[], findings: Finding[]): void {
         if (total > 100) {
           findings.push({
             rule: "mcp-manifest",
-            severity: "warning",
+            severity: "low",
             file: file.relativePath,
             message: `W002: Server "${serverName}" exposes ${total} entities (${tools} tools, ${resources} resources, ${prompts} prompts) — agent performance may degrade above 100`,
           });
         } else if (total > 50) {
           findings.push({
             rule: "mcp-manifest",
-            severity: "info",
+            severity: "low",
             file: file.relativePath,
             message: `Server "${serverName}" exposes ${total} entities — consider reducing for optimal agent performance`,
           });

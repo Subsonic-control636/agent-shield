@@ -81,7 +81,7 @@ export const skillRisks: Rule = {
             if (pattern.test(line)) {
               findings.push({
                 rule: "skill-risks",
-                severity: "warning",
+                severity: "medium",
                 file: file.relativePath,
                 line: i + 1,
                 message: `Insecure credential handling: ${description}`,
@@ -97,7 +97,7 @@ export const skillRisks: Rule = {
           if (pattern.test(line)) {
             findings.push({
               rule: "skill-risks",
-              severity: "warning",
+              severity: "medium",
               file: file.relativePath,
               line: i + 1,
               message: `Financial execution: ${description}`,
@@ -113,7 +113,7 @@ export const skillRisks: Rule = {
             if (pattern.test(line)) {
               findings.push({
                 rule: "skill-risks",
-                severity: "warning",
+                severity: "medium",
                 file: file.relativePath,
                 line: i + 1,
                 message: `Untrusted content exposure: ${description}`,
@@ -130,7 +130,7 @@ export const skillRisks: Rule = {
             if (pattern.test(line)) {
               findings.push({
                 rule: "skill-risks",
-                severity: isCode ? "critical" : "warning",
+                severity: isCode ? "medium" : "medium",
                 file: file.relativePath,
                 line: i + 1,
                 message: `Unverifiable external dependency: ${description}`,
@@ -146,7 +146,7 @@ export const skillRisks: Rule = {
           if (pattern.test(line)) {
             findings.push({
               rule: "skill-risks",
-              severity: isSkillMd ? "warning" : "info",
+              severity: isSkillMd ? "medium" : "low",
               file: file.relativePath,
               line: i + 1,
               message: `System modification: ${description}`,
