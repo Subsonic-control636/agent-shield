@@ -20,6 +20,7 @@ import { toolShadowing } from "./tool-shadowing.js";
 import { skillRisks } from "./skill-risks.js";
 import { toxicFlow } from "./toxic-flow.js";
 import { pythonSecurityRule } from "./python-security.js";
+import { crossFileRule } from "./cross-file.js";
 
 /** All registered rules */
 export const rules: Rule[] = [
@@ -50,6 +51,8 @@ export const rules: Rule[] = [
   toxicFlow,
   // Python-specific security
   pythonSecurityRule,
+  // Cross-file correlation analysis
+  crossFileRule,
 ];
 
 /** Get a rule by ID */
