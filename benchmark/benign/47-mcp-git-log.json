@@ -1,0 +1,10 @@
+{
+  "name": "mcp-git-log",
+  "description": "View git commit history and diffs",
+  "version": "1.0.0",
+  "tools": [
+    {"name": "log", "description": "Show recent commits", "input": {"count": "number"}},
+    {"name": "diff", "description": "Show diff for a commit", "input": {"sha": "string"}},
+    {"name": "blame", "description": "Show line-by-line blame", "input": {"file": "string"}}
+  ]
+}

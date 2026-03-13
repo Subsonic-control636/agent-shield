@@ -1,0 +1,11 @@
+{
+  "name": "mcp-calculator",
+  "description": "A simple calculator MCP server",
+  "version": "1.0.0",
+  "tools": [
+    {"name": "add", "description": "Add two numbers", "input": {"a": "number", "b": "number"}},
+    {"name": "subtract", "description": "Subtract b from a", "input": {"a": "number", "b": "number"}},
+    {"name": "multiply", "description": "Multiply two numbers", "input": {"a": "number", "b": "number"}},
+    {"name": "divide", "description": "Divide a by b", "input": {"a": "number", "b": "number"}}
+  ]
+}
