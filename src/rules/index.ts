@@ -25,6 +25,7 @@ import { attackChainRule } from "./attack-chain.js";
 import { multilangInjectionRule } from "./multilang-injection.js";
 import { descriptionIntegrityRule } from "./description-integrity.js";
 import { pythonAstRule } from "./python-ast.js";
+import { mcpRuntimeRule } from "./mcp-runtime.js";
 
 /** All registered rules */
 export const rules: Rule[] = [
@@ -65,6 +66,8 @@ export const rules: Rule[] = [
   descriptionIntegrityRule,
   // Python AST deep analysis
   pythonAstRule,
+  // MCP runtime security
+  mcpRuntimeRule,
 ];
 
 /** Get a rule by ID */
