@@ -261,6 +261,117 @@ program
   });
 
 program
+  .command("install-check")
+  .description("Scan a remote skill/plugin before installing it")
+  .argument("<url>", "GitHub URL, npm package, or local path")
+  .option("--json", "Output results as JSON")
+  .option("--fail-under <score>", "Exit with code 1 if score is below threshold", parseInt)
+  .option("--ai", "Enable AI-powered deep analysis")
+  .option("--provider <provider>", "AI provider: openai | anthropic | ollama")
+  .option("--model <model>", "AI model to use")
+  .action(async (url: string, options: { json?: boolean; failUnder?: number; ai?: boolean; provider?: string; model?: string }) => {
+    const { execSync } = await import("child_process");
+    const { mkdtempSync, rmSync, existsSync: ex } = await import("fs");
+    const { tmpdir } = await import("os");
+    const { join: pjoin } = await import("path");
+
+    let scanDir: string;
+    let tempDir: string | null = null;
+    let source = url;
+
+    // Determine source type
+    const isGitHub = /^https?:\/\/(www\.)?github\.com\//.test(url) || /^[\w-]+\/[\w.-]+$/.test(url);
+    const isNpm = url.startsWith("@") || (!url.includes("/") && !url.includes(".") && !ex(url));
+
+    if (isGitHub) {
+      // GitHub URL or owner/repo shorthand
+      const repoUrl = url.startsWith("http") ? url : `https://github.com/${url}`;
+      tempDir = mkdtempSync(pjoin(tmpdir(), "agent-shield-check-"));
+      console.error(`📥 Cloning ${repoUrl}...`);
+      try {
+        execSync(`git clone --depth 1 ${repoUrl} ${tempDir}/repo`, { stdio: "pipe" });
+      } catch {
+        console.error(`❌ Failed to clone ${repoUrl}`);
+        if (tempDir) rmSync(tempDir, { recursive: true, force: true });
+        process.exit(1);
+      }
+      scanDir = pjoin(tempDir, "repo");
+      source = repoUrl;
+    } else if (isNpm) {
+      // npm package
+      tempDir = mkdtempSync(pjoin(tmpdir(), "agent-shield-check-"));
+      console.error(`📥 Downloading npm package ${url}...`);
+      try {
+        execSync(`npm pack ${url} --pack-destination ${tempDir}`, { stdio: "pipe" });
+        const tgz = execSync(`ls ${tempDir}/*.tgz`).toString().trim();
+        execSync(`tar -xzf ${tgz} -C ${tempDir}`, { stdio: "pipe" });
+        scanDir = pjoin(tempDir, "package");
+      } catch {
+        console.error(`❌ Failed to download ${url} from npm`);
+        if (tempDir) rmSync(tempDir, { recursive: true, force: true });
+        process.exit(1);
+      }
+      source = `npm:${url}`;
+    } else {
+      // Local path or .difypkg
+      const target = resolve(url);
+      if (target.endsWith(".difypkg") || target.endsWith(".zip")) {
+        tempDir = extractDifypkg(target);
+        scanDir = tempDir;
+      } else if (ex(target) && statSync(target).isDirectory()) {
+        scanDir = target;
+      } else {
+        console.error(`❌ "${url}" is not a valid URL, npm package, or directory`);
+        process.exit(1);
+      }
+      source = target;
+    }
+
+    console.error(`🔍 Scanning ${source}...\n`);
+    const result = scan(scanDir);
+
+    // AI analysis if requested
+    if (options.ai) {
+      const llmConfig = resolveAiConfig(options.provider, options.model);
+      if (!llmConfig) {
+        console.error("Error: --ai requires an API key.");
+        if (tempDir) rmSync(tempDir, { recursive: true, force: true });
+        process.exit(1);
+      }
+      console.error(`🤖 Running AI analysis...`);
+      const { collectFiles } = await import("./scanner/files.js");
+      const files = collectFiles(scanDir);
+      const llmFindings = await runLlmAnalysis(files, llmConfig);
+      result.findings.push(...llmFindings);
+      const { computeScore } = await import("./score.js");
+      result.score = computeScore(result.findings);
+    }
+
+    if (options.json) {
+      printJsonReport(result);
+    } else {
+      printReport(result);
+      // Install recommendation
+      console.log();
+      if (result.score >= 90) {
+        console.log("✅ Safe to install — no significant risks detected.");
+      } else if (result.score >= 70) {
+        console.log("🟡 Moderate risk — review the warnings above before installing.");
+      } else if (result.score >= 40) {
+        console.log("🟠 High risk — investigate findings carefully before using.");
+      } else {
+        console.log("🔴 Critical risk — DO NOT install. Serious security issues detected.");
+      }
+    }
+
+    if (tempDir) rmSync(tempDir, { recursive: true, force: true });
+
+    if (options.failUnder !== undefined && result.score < options.failUnder) {
+      process.exit(1);
+    }
+  });
+
+program
   .command("discover")
   .description("Discover installed AI agents, MCP servers, and skills on this machine")
   .option("--json", "Output as JSON")
@@ -291,7 +402,7 @@ program
 
 // Default: if first arg looks like a directory, treat as scan
 const args = process.argv.slice(2);
-if (args.length > 0 && !args[0]!.startsWith("-") && !["scan", "init", "watch", "compare", "badge", "discover", "help"].includes(args[0]!)) {
+if (args.length > 0 && !args[0]!.startsWith("-") && !["scan", "init", "watch", "compare", "badge", "discover", "install-check", "help"].includes(args[0]!)) {
   process.argv.splice(2, 0, "scan");
 }
 

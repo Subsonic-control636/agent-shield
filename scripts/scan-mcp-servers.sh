@@ -5,7 +5,7 @@
 set -e
 
 SCAN_DIR="/tmp/mcp-scan-targets"
-AGENTSHIELD="$(dirname "$0")/../dist/cli.js"
+AGENT_SHIELD="$(dirname "$0")/../dist/cli.js"
 
 mkdir -p "$SCAN_DIR"
 
@@ -32,16 +32,16 @@ for repo in "${REPOS[@]}"; do
 
   echo ""
   echo "🔍 Scanning $repo..."
-  node "$AGENTSHIELD" scan "$dir" --json 2>/dev/null | node -e "
+  node "$AGENT_SHIELD" scan "$dir" --json 2>/dev/null | node -e "
     const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
-    const real = d.findings.filter(f => !f.possibleFalsePositive && f.severity !== 'info');
-    const crit = real.filter(f => f.severity === 'critical');
-    const warn = real.filter(f => f.severity === 'warning');
-    console.log('  Files: ' + d.filesScanned + ' | Critical: ' + crit.length + ' | Warning: ' + warn.length + ' | Score: ' + d.score);
-    if (crit.length > 0) {
-      console.log('  Critical findings:');
-      crit.slice(0,5).forEach(f => console.log('    - [' + f.rule + '] ' + f.file + ':' + f.line + ' — ' + f.message.substring(0,80)));
-      if (crit.length > 5) console.log('    ... +' + (crit.length - 5) + ' more');
+    const real = d.findings.filter(f => !f.possibleFalsePositive && f.severity !== 'low');
+    const high = real.filter(f => f.severity === 'high');
+    const med = real.filter(f => f.severity === 'medium');
+    console.log('  Files: ' + d.filesScanned + ' | High: ' + high.length + ' | Medium: ' + med.length + ' | Score: ' + d.score);
+    if (high.length > 0) {
+      console.log('  High risk findings:');
+      high.slice(0,5).forEach(f => console.log('    - [' + f.rule + '] ' + f.file + ':' + f.line + ' — ' + f.message.substring(0,80)));
+      if (high.length > 5) console.log('    ... +' + (high.length - 5) + ' more');
     }
   "
 done

@@ -15,39 +15,54 @@ Scan any directory for security issues in AI agent skills, MCP servers, and plug
 
 ## Usage
 
-Run `npx @elliotllliu/agent-shield scan <directory>` to scan a target.
-
 ```bash
 # Basic scan
 npx @elliotllliu/agent-shield scan ./path/to/skill/
+
+# Pre-install check (GitHub URL, npm package, or local path)
+npx @elliotllliu/agent-shield install-check https://github.com/user/repo
 
 # JSON output for programmatic use
 npx @elliotllliu/agent-shield scan ./path/to/skill/ --json
 
 # Fail if score is below threshold
 npx @elliotllliu/agent-shield scan ./path/to/skill/ --fail-under 70
+
+# Scan .difypkg plugin archives
+npx @elliotllliu/agent-shield scan ./plugin.difypkg
 ```
 
-## What It Detects (15 rules)
+## What It Detects (30 rules)
 
-**Critical:**
+**High Risk:**
 - `data-exfil` — reads sensitive files + sends HTTP requests
 - `backdoor` — eval(), exec(), dynamic code execution
 - `reverse-shell` — outbound socket to shell
 - `crypto-mining` — mining pool connections
 - `credential-hardcode` — hardcoded API keys/tokens
-- `env-leak` — process.env exfiltration
 - `obfuscation` — base64+eval, hex strings
-- `typosquatting` — suspicious npm package names
-- `hidden-files` — .env with secrets committed
+- `prompt-injection` — 55+ patterns, 12 categories, 8 languages
+- `tool-shadowing` — tool name/description manipulation
+- `attack-chain` — multi-step kill chain (5 stages)
+- `cross-file` — cross-file data flow and code injection
+- `ast-*` — Python AST taint tracking (eval, pickle, SQL injection, SSTI)
+- `multilang-injection` — 8-language prompt injection
+- `description-integrity` — semantic mismatch between description and code
+- `mcp-runtime` — MCP server runtime security issues
 
-**Warning:**
+**Medium Risk:**
+- `env-leak` — process.env exfiltration
 - `network-ssrf` — user-controlled URLs, SSRF
 - `privilege` — SKILL.md permission vs code mismatch
 - `supply-chain` — known CVEs in dependencies
 - `sensitive-read` — SSH keys, AWS creds access
-- `excessive-perms` — too many permissions declared
 - `phone-home` — periodic beacon/heartbeat pattern
+- `python-security` — 35 Python-specific patterns
+
+**Low Risk:**
+- `excessive-perms` — too many permissions declared
+- `hidden-files` — .env with secrets committed
+- `typosquatting` — suspicious npm package names
 
 ## Interpreting Results
 
@@ -58,7 +73,7 @@ npx @elliotllliu/agent-shield scan ./path/to/skill/ --fail-under 70
 
 ## When to Use
 
-1. Before installing a third-party skill: `npx @elliotllliu/agent-shield scan ./downloaded-skill/`
+1. Before installing a third-party skill: `npx @elliotllliu/agent-shield install-check <url>`
 2. Auditing your own skills before publishing
 3. CI/CD pipeline gate: `--fail-under 70`
 4. Reviewing skills from untrusted sources

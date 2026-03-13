@@ -73,12 +73,12 @@ export function resolveAiConfig(
   }
 
   // Fallback: try any available key
-  const fallbackKey = process.env.AGENTSHIELD_API_KEY || process.env.LLM_API_KEY;
+  const fallbackKey = process.env.AGENT_SHIELD_API_KEY || process.env.AGENTSHIELD_API_KEY || process.env.LLM_API_KEY;
   if (fallbackKey) {
     return {
       apiKey: fallbackKey,
       model: modelFlag || "gpt-4o-mini",
-      baseUrl: process.env.AGENTSHIELD_BASE_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+      baseUrl: process.env.AGENT_SHIELD_BASE_URL || process.env.AGENTSHIELD_BASE_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
       provider: "openai",
     };
   }
@@ -91,6 +91,7 @@ export function getLlmConfigFromEnv(): LlmConfig | null {
   const apiKey =
     process.env.OPENAI_API_KEY ||
     process.env.ANTHROPIC_API_KEY ||
+    process.env.AGENT_SHIELD_API_KEY ||
     process.env.AGENTSHIELD_API_KEY ||
     process.env.LLM_API_KEY;
 
@@ -99,8 +100,8 @@ export function getLlmConfigFromEnv(): LlmConfig | null {
   const isAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
   return {
     apiKey,
-    model: process.env.AGENTSHIELD_MODEL || process.env.OPENAI_MODEL || (isAnthropicKey ? "claude-sonnet-4-20250514" : "gpt-4o-mini"),
-    baseUrl: process.env.AGENTSHIELD_BASE_URL || process.env.OPENAI_BASE_URL || (isAnthropicKey ? "https://api.anthropic.com/v1" : "https://api.openai.com/v1"),
+    model: process.env.AGENT_SHIELD_MODEL || process.env.AGENTSHIELD_MODEL || process.env.OPENAI_MODEL || (isAnthropicKey ? "claude-sonnet-4-20250514" : "gpt-4o-mini"),
+    baseUrl: process.env.AGENT_SHIELD_BASE_URL || process.env.AGENTSHIELD_BASE_URL || process.env.OPENAI_BASE_URL || (isAnthropicKey ? "https://api.anthropic.com/v1" : "https://api.openai.com/v1"),
     provider: isAnthropicKey ? "anthropic" : "openai",
   };
 }

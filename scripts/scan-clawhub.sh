@@ -34,7 +34,7 @@ for repo in "${REPOS[@]}"; do
   fi
   
   # Scan with JSON output
-  node /tmp/agentshield/dist/cli.js scan "$dir" --json 2>/dev/null | \
+  npx @elliotllliu/agent-shield scan "$dir" --json 2>/dev/null | \
     python3 -c "
 import sys, json
 data = json.load(sys.stdin)
@@ -43,9 +43,9 @@ print(json.dumps({
   'files': data['filesScanned'],
   'lines': data['linesScanned'],
   'score': data['score'],
-  'critical': len([f for f in data['findings'] if f['severity'] == 'critical']),
-  'warning': len([f for f in data['findings'] if f['severity'] == 'warning']),
-  'info': len([f for f in data['findings'] if f['severity'] == 'info']),
+  'high': len([f for f in data['findings'] if f['severity'] == 'high']),
+  'medium': len([f for f in data['findings'] if f['severity'] == 'medium']),
+  'low': len([f for f in data['findings'] if f['severity'] == 'low']),
   'findings': data['findings'][:20],
   'duration': data['duration']
 }))
