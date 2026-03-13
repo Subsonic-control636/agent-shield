@@ -5,8 +5,8 @@ Thanks for your interest in making AI agent security better! 🛡️
 ## Development Setup
 
 ```bash
-git clone https://github.com/elliotllliu/agentshield.git
-cd agentshield
+git clone https://github.com/elliotllliu/agent-shield.git
+cd agent-shield
 npm install
 npm run build
 npm test

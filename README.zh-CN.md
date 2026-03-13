@@ -1,6 +1,6 @@
 # 🛡️ AgentShield — AI Agent 安全扫描器
 
-[![npm](https://img.shields.io/npm/v/@elliotllliu/agentshield)](https://www.npmjs.com/package/@elliotllliu/agentshield)
+[![npm](https://img.shields.io/npm/v/@elliotllliu/agent-shield)](https://www.npmjs.com/package/@elliotllliu/agent-shield)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 专为 AI Agent 技能、MCP Server、插件设计的安全扫描工具。在安装第三方扩展之前，检测数据窃取、后门、凭证泄露和供应链漏洞。
@@ -22,7 +22,7 @@ AgentShield 用 **16 条安全规则**在 50ms 内检出这些威胁。
 ## 快速开始
 
 ```bash
-npx @elliotllliu/agentshield scan ./my-skill/
+npx @elliotllliu/agent-shield scan ./my-skill/
 ```
 
 无需安装，Node.js 18+ 即可运行。
@@ -75,34 +75,34 @@ npx @elliotllliu/agentshield scan ./my-skill/
 
 ```bash
 # 扫描目录
-npx @elliotllliu/agentshield scan ./skill/
+npx @elliotllliu/agent-shield scan ./skill/
 
 # JSON 输出
-npx @elliotllliu/agentshield scan ./skill/ --json
+npx @elliotllliu/agent-shield scan ./skill/ --json
 
 # CI 门禁
-npx @elliotllliu/agentshield scan ./skill/ --fail-under 70
+npx @elliotllliu/agent-shield scan ./skill/ --fail-under 70
 
 # 禁用特定规则
-npx @elliotllliu/agentshield scan ./skill/ --disable supply-chain
+npx @elliotllliu/agent-shield scan ./skill/ --disable supply-chain
 
 # 初始化配置
-npx @elliotllliu/agentshield init
+npx @elliotllliu/agent-shield init
 
 # 实时监控
-npx @elliotllliu/agentshield watch ./skill/
+npx @elliotllliu/agent-shield watch ./skill/
 
 # 版本对比
-npx @elliotllliu/agentshield compare ./v1/ ./v2/
+npx @elliotllliu/agent-shield compare ./v1/ ./v2/
 
 # 生成安全徽章
-npx @elliotllliu/agentshield badge ./skill/
+npx @elliotllliu/agent-shield badge ./skill/
 ```
 
 ## GitHub Actions 集成
 
 ```yaml
-- uses: elliotllliu/agentshield@main
+- uses: elliotllliu/agent-shield@main
   with:
     path: './skills/'
     fail-under: '70'
@@ -120,7 +120,7 @@ npx @elliotllliu/agentshield badge ./skill/
 
 ## 链接
 
-- 📦 [npm](https://www.npmjs.com/package/@elliotllliu/agentshield)
+- 📦 [npm](https://www.npmjs.com/package/@elliotllliu/agent-shield)
 - 📖 [规则文档](docs/rules.md)
 - 📊 [ClawHub 安全报告](docs/clawhub-security-report.md)
 - 🇬🇧 [English README](README.md)

@@ -21,7 +21,7 @@ const MAX_FILE_SIZE = 512 * 1024; // 512 KB
 
 /** Extract .difypkg (zip) to a temp directory and return the path */
 export function extractDifypkg(filePath: string): string {
-  const tmpDir = mkdtempSync(join(tmpdir(), "agentshield-difypkg-"));
+  const tmpDir = mkdtempSync(join(tmpdir(), "agent-shield-difypkg-"));
   try {
     execSync(`unzip -q -o "${filePath}" -d "${tmpDir}"`, { stdio: "pipe" });
   } catch {

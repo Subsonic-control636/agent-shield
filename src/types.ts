@@ -60,7 +60,7 @@ export interface SkillMetadata {
   [key: string]: unknown;
 }
 
-/** Scan configuration from .agentshield.yml */
+/** Scan configuration from .agent-shield.yml */
 export interface ScanConfig {
   rules?: {
     enable?: string[];

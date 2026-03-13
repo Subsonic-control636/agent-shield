@@ -65,7 +65,7 @@ app.get("/scan/:owner/:repo", (_req, res) => {
 });
 
 async function cloneAndScan(repoUrl, subpath) {
-  const tmpDir = mkdtempSync(join(tmpdir(), "agentshield-"));
+  const tmpDir = mkdtempSync(join(tmpdir(), "agent-shield-"));
 
   try {
     // Clone with depth 1
@@ -79,7 +79,7 @@ async function cloneAndScan(repoUrl, subpath) {
       throw new Error(`Path "${subpath}" not found in repository`);
     }
 
-    // Run agentshield scan
+    // Run agent-shield scan
     const cliPath = join(__dirname, "..", "dist", "cli.js");
     const output = execSync(`node ${cliPath} scan "${scanDir}" --json`, {
       timeout: 60000,

@@ -54,7 +54,7 @@ runs:
 
         # Run scan and capture output
         set +e
-        OUTPUT=$(npx -y @elliotllliu/agentshield scan $ARGS 2>&1)
+        OUTPUT=$(npx -y @elliotllliu/agent-shield scan $ARGS 2>&1)
         EXIT_CODE=$?
         set -e
 

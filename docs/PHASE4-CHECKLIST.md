@@ -76,7 +76,7 @@
 ~~自动扫描本机已安装 AI agent 的 MCP 配置文件。~~
 
 - [x] 4.4.1 `src/discover.ts` — 10 种 agent 路径 + MCP server 计数
-- [x] 4.4.2 CLI `agentshield discover` 命令
+- [x] 4.4.2 CLI `agent-shield discover` 命令
 - [x] 4.4.3 `--json` 输出
 - [x] 4.4.4 `--scan` 自动扫描所有发现的配置
 - [x] 4.4.5 写测试 `tests/discover.test.ts` — 3 个测试

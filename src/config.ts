@@ -17,7 +17,7 @@ export interface ScanConfig {
   ignore?: string[];
 }
 
-const CONFIG_NAMES = [".agentshield.yml", ".agentshield.yaml", "agentshield.config.yml"];
+const CONFIG_NAMES = [".agent-shield.yml", ".agentshield.yaml", "agent-shield.config.yml"];
 
 /** Load config from target directory or parents */
 export function loadConfig(dir: string): ScanConfig {
@@ -35,9 +35,9 @@ export function loadConfig(dir: string): ScanConfig {
   return {};
 }
 
-/** Load .agentshieldignore patterns */
+/** Load .agent-shieldignore patterns */
 export function loadIgnorePatterns(dir: string): string[] {
-  const ignorePath = join(dir, ".agentshieldignore");
+  const ignorePath = join(dir, ".agent-shieldignore");
   if (!existsSync(ignorePath)) return [];
 
   try {
@@ -70,9 +70,9 @@ export function isIgnored(filePath: string, patterns: string[]): boolean {
   return false;
 }
 
-/** Default config content for `agentshield init` */
+/** Default config content for `agent-shield init` */
 export const DEFAULT_CONFIG = `# AgentShield Configuration
-# https://github.com/elliotllliu/agentshield
+# https://github.com/elliotllliu/agent-shield
 
 rules:
   # disable:

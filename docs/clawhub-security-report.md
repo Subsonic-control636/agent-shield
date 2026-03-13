@@ -1,7 +1,7 @@
 # 🛡️ ClawHub Security Report — Top Skills Audit
 
-> Scanned by [AgentShield](https://github.com/elliotllliu/agentshield) v0.2.1 (with false-positive detection)
-> Date: 2026-03-12
+> Scanned by [AgentShield](https://github.com/elliotllliu/agent-shield) v0.4.x (30 rules, AST taint tracking, cross-file analysis)
+> Date: 2026-03-13
 
 ## Summary
 
@@ -16,7 +16,7 @@ We scanned **9 of the most popular skill repositories** on ClawHub, covering ski
 | Repos with findings requiring review | 6 (67%) |
 | Clean (no findings) | 3 (33%) |
 
-> Scores reflect AgentShield v0.2.1 with smart false-positive detection — test files, deploy scripts, and CI configs are automatically identified and their findings downgraded.
+> Scores reflect AgentShield v0.4.x with smart false-positive detection — test files, deploy scripts, and CI configs are automatically identified and their findings downgraded.
 
 ## Results
 
@@ -108,7 +108,7 @@ This is why automated scanning is a starting point, not a final verdict.
 4. **Add AgentShield to CI** — not to block merges, but to track security surface area
 
 ### For Skill Consumers
-1. **Scan before installing** — `npx @elliotllliu/agentshield scan ./skill/`
+1. **Scan before installing** — `npx @elliotllliu/agent-shield scan ./skill/`
 2. **Review findings in context** — a deploy skill using `curl` is normal
 3. **Be cautious with unknown authors** — verified orgs (Vercel, Anthropic) have reputation at stake
 
@@ -119,20 +119,20 @@ This is why automated scanning is a starting point, not a final verdict.
 
 ## Methodology & Limitations
 
-- **Tool:** [AgentShield](https://github.com/elliotllliu/agentshield) v0.2.1
-- **Rules:** 16 security rules (pattern-based static analysis)
+- **Tool:** [AgentShield](https://github.com/elliotllliu/agent-shield) v0.4.x
+- **Rules:** 30 security rules (pattern + AST + cross-file analysis)
 - **Scope:** Full repository scan (all files, not just SKILL.md)
 
 ### Known Limitations
 - **False positives:** Pattern matching cannot determine intent. A legitimate `fetch()` call looks identical to data exfiltration at the code level.
-- **No AST analysis:** Current rules use regex patterns, not abstract syntax trees. This means some context is lost.
+- **AST analysis:** Python AST taint tracking is available for `.py` files. JS/TS still uses pattern matching.
 - **Test code included:** Test files are scanned alongside production code, which inflates finding counts.
 - **Raw scores are directional:** A low score means "patterns worth reviewing," not "this project is malicious."
 
 ## Scan Your Own Skills
 
 ```bash
-npx @elliotllliu/agentshield scan ./my-skill/
+npx @elliotllliu/agent-shield scan ./my-skill/
 ```
 
 ---

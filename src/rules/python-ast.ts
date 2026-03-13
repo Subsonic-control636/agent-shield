@@ -54,7 +54,7 @@ function runAstAnalysis(files: ScannedFile[]): AstFinding[] {
   if (pyFiles.length === 0) return [];
 
   // Write files to temp directory for analysis
-  const tmpDir = join(tmpdir(), `agentshield-ast-${Date.now()}`);
+  const tmpDir = join(tmpdir(), `agent-shield-ast-${Date.now()}`);
   try {
     execSync(`mkdir -p ${tmpDir}`, { stdio: "pipe" });
   } catch { return []; }

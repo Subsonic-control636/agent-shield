@@ -15,7 +15,7 @@ import { DEFAULT_CONFIG, DEFAULT_IGNORE } from "./config.js";
 const program = new Command();
 
 program
-  .name("agentshield")
+  .name("agent-shield")
   .description("Security scanner for AI agent skills, MCP servers, and plugins")
   .version("0.1.0");
 
@@ -94,7 +94,7 @@ program
 
 program
   .command("init")
-  .description("Generate .agentshield.yml and .agentshieldignore config files")
+  .description("Generate .agent-shield.yml and .agent-shieldignore config files")
   .argument("[directory]", "Target directory", ".")
   .action((directory: string) => {
     const target = resolve(directory);
@@ -102,8 +102,8 @@ program
     if (!existsSync(target)) {
       mkdirSync(target, { recursive: true });
     }
-    const configPath = join(target, ".agentshield.yml");
-    const ignorePath = join(target, ".agentshieldignore");
+    const configPath = join(target, ".agent-shield.yml");
+    const ignorePath = join(target, ".agent-shieldignore");
 
     if (existsSync(configPath)) {
       console.log(`⚠️  ${configPath} already exists, skipping`);
@@ -158,7 +158,7 @@ program
         process.exit(0);
       });
     } catch {
-      console.error("⚠️  fs.watch recursive not supported on this platform. Use: nodemon --exec 'agentshield scan .'");
+      console.error("⚠️  fs.watch recursive not supported on this platform. Use: nodemon --exec 'agent-shield scan .'");
     }
   });
 

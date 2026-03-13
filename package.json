@@ -1,10 +1,10 @@
 {
-  "name": "@elliotllliu/agentshield",
+  "name": "@elliotllliu/agent-shield",
   "version": "0.4.3",
-  "description": "Security scanner for AI agent skills, MCP servers, and plugins",
+  "description": "Security scanner for AI agents, MCP servers & plugins — 30 rules, AST taint tracking, cross-file analysis, kill chain detection. Free, offline, open source.",
   "type": "module",
   "bin": {
-    "agentshield": "./dist/cli.js"
+    "agent-shield": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
@@ -16,29 +16,30 @@
     "security",
     "scanner",
     "ai-agent",
-    "skill",
     "mcp",
     "plugin",
     "vulnerability",
-    "audit",
-    "backdoor",
-    "data-exfiltration",
-    "credential-leak",
     "static-analysis",
-    "codex",
-    "claude",
-    "openai",
+    "ast",
+    "taint-tracking",
+    "cross-file-analysis",
+    "kill-chain",
+    "prompt-injection",
+    "tool-poisoning",
+    "data-exfiltration",
+    "backdoor",
+    "credential-leak",
+    "supply-chain",
+    "dify",
+    "difypkg",
+    "python-security",
     "github-action",
     "cli",
-    "npm",
     "ai-safety",
-    "supply-chain",
-    "reverse-shell",
-    "typosquatting",
-    "ssrf",
+    "model-context-protocol",
     "openclaw",
-    "clawhub",
-    "model-context-protocol"
+    "codex",
+    "claude"
   ],
   "author": "Elliot Liu",
   "license": "MIT",
@@ -64,10 +65,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/elliotllliu/agentshield.git"
+    "url": "https://github.com/elliotllliu/agent-shield.git"
   },
   "bugs": {
-    "url": "https://github.com/elliotllliu/agentshield/issues"
+    "url": "https://github.com/elliotllliu/agent-shield/issues"
   },
-  "homepage": "https://github.com/elliotllliu/agentshield#readme"
+  "homepage": "https://github.com/elliotllliu/agent-shield#readme"
 }

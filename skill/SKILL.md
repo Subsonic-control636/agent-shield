@@ -1,5 +1,5 @@
 ---
-name: agentshield
+name: agent-shield
 description: >
   Scan AI agent skills, MCP servers, and plugins for security vulnerabilities.
   Use when: user asks to check a skill/plugin for safety, audit security,
@@ -15,17 +15,17 @@ Scan any directory for security issues in AI agent skills, MCP servers, and plug
 
 ## Usage
 
-Run `npx @elliotllliu/agentshield scan <directory>` to scan a target.
+Run `npx @elliotllliu/agent-shield scan <directory>` to scan a target.
 
 ```bash
 # Basic scan
-npx @elliotllliu/agentshield scan ./path/to/skill/
+npx @elliotllliu/agent-shield scan ./path/to/skill/
 
 # JSON output for programmatic use
-npx @elliotllliu/agentshield scan ./path/to/skill/ --json
+npx @elliotllliu/agent-shield scan ./path/to/skill/ --json
 
 # Fail if score is below threshold
-npx @elliotllliu/agentshield scan ./path/to/skill/ --fail-under 70
+npx @elliotllliu/agent-shield scan ./path/to/skill/ --fail-under 70
 ```
 
 ## What It Detects (15 rules)
@@ -58,7 +58,7 @@ npx @elliotllliu/agentshield scan ./path/to/skill/ --fail-under 70
 
 ## When to Use
 
-1. Before installing a third-party skill: `npx @elliotllliu/agentshield scan ./downloaded-skill/`
+1. Before installing a third-party skill: `npx @elliotllliu/agent-shield scan ./downloaded-skill/`
 2. Auditing your own skills before publishing
 3. CI/CD pipeline gate: `--fail-under 70`
 4. Reviewing skills from untrusted sources

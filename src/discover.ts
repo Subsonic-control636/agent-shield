@@ -163,6 +163,6 @@ export function printDiscovery(agents: DiscoveredAgent[]): void {
     console.log();
   }
 
-  console.log(chalk.dim("Run `agentshield scan <path>` on any config or skills directory above."));
+  console.log(chalk.dim("Run `agent-shield scan <path>` on any config or skills directory above."));
   console.log();
 }

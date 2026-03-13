@@ -2,7 +2,7 @@
 
 **The open-source security scanner for AI agent skills, MCP servers, and plugins.**
 
-[![npm](https://img.shields.io/npm/v/@elliotllliu/agentshield)](https://www.npmjs.com/package/@elliotllliu/agentshield)
+[![npm](https://img.shields.io/npm/v/@elliotllliu/agent-shield)](https://www.npmjs.com/package/@elliotllliu/agent-shield)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-236%20passing-brightgreen)]()
 [![F1 Score](https://img.shields.io/badge/F1-100%25-brightgreen)]()
@@ -31,20 +31,20 @@ AgentShield catches these patterns with **30 security rules**, **Python AST tain
 
 ```bash
 # Scan a skill/plugin (30 rules, offline, <1s)
-npx @elliotllliu/agentshield scan ./my-skill/
+npx @elliotllliu/agent-shield scan ./my-skill/
 
 # Scan Dify plugins (.difypkg archives)
-npx @elliotllliu/agentshield scan ./plugin.difypkg
+npx @elliotllliu/agent-shield scan ./plugin.difypkg
 
 # AI-powered deep analysis (uses YOUR API key)
-npx @elliotllliu/agentshield scan ./skill/ --ai --provider openai --model gpt-4o
-npx @elliotllliu/agentshield scan ./skill/ --ai --provider ollama --model llama3
+npx @elliotllliu/agent-shield scan ./skill/ --ai --provider openai --model gpt-4o
+npx @elliotllliu/agent-shield scan ./skill/ --ai --provider ollama --model llama3
 
 # Discover installed agents on your machine
-npx @elliotllliu/agentshield discover
+npx @elliotllliu/agent-shield discover
 
 # CI/CD integration
-npx @elliotllliu/agentshield scan ./skill/ --json --fail-under 70
+npx @elliotllliu/agent-shield scan ./skill/ --json --fail-under 70
 ```
 
 ## What It Detects — 30 Security Rules
@@ -213,37 +213,37 @@ Score: 0/100 (Critical Risk)
 
 ```bash
 # Basic scan
-npx @elliotllliu/agentshield scan ./path/to/skill/
+npx @elliotllliu/agent-shield scan ./path/to/skill/
 
 # Scan .difypkg archive (auto-extracts)
-npx @elliotllliu/agentshield scan ./plugin.difypkg
+npx @elliotllliu/agent-shield scan ./plugin.difypkg
 
 # AI deep analysis (your own API key, no vendor lock-in)
-npx @elliotllliu/agentshield scan ./skill/ --ai --provider openai --model gpt-4o
-npx @elliotllliu/agentshield scan ./skill/ --ai --provider anthropic
-npx @elliotllliu/agentshield scan ./skill/ --ai --provider ollama --model llama3
+npx @elliotllliu/agent-shield scan ./skill/ --ai --provider openai --model gpt-4o
+npx @elliotllliu/agent-shield scan ./skill/ --ai --provider anthropic
+npx @elliotllliu/agent-shield scan ./skill/ --ai --provider ollama --model llama3
 
 # Discover agents installed on your machine
-npx @elliotllliu/agentshield discover
+npx @elliotllliu/agent-shield discover
 
 # JSON output for CI/CD
-npx @elliotllliu/agentshield scan ./skill/ --json
+npx @elliotllliu/agent-shield scan ./skill/ --json
 
 # Fail CI if score too low
-npx @elliotllliu/agentshield scan ./skill/ --fail-under 70
+npx @elliotllliu/agent-shield scan ./skill/ --fail-under 70
 
 # Selective rules
-npx @elliotllliu/agentshield scan ./skill/ --disable supply-chain
-npx @elliotllliu/agentshield scan ./skill/ --enable backdoor,data-exfil
+npx @elliotllliu/agent-shield scan ./skill/ --disable supply-chain
+npx @elliotllliu/agent-shield scan ./skill/ --enable backdoor,data-exfil
 
 # Generate config
-npx @elliotllliu/agentshield init
+npx @elliotllliu/agent-shield init
 
 # Watch mode
-npx @elliotllliu/agentshield watch ./skill/
+npx @elliotllliu/agent-shield watch ./skill/
 
 # Security badge for your README
-npx @elliotllliu/agentshield badge ./skill/
+npx @elliotllliu/agent-shield badge ./skill/
 ```
 
 ## CI Integration
@@ -259,7 +259,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: elliotllliu/agentshield@main
+      - uses: elliotllliu/agent-shield@main
         with:
           path: './skills/'
           fail-under: '70'
@@ -269,12 +269,12 @@ jobs:
 
 ```yaml
 - name: Security scan
-  run: npx -y @elliotllliu/agentshield scan . --fail-under 70
+  run: npx -y @elliotllliu/agent-shield scan . --fail-under 70
 ```
 
 ## Configuration
 
-Create `.agentshield.yml` (or run `agentshield init`):
+Create `.agent-shield.yml` (or run `agentshield init`):
 
 ```yaml
 rules:
@@ -371,7 +371,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new rules.
 
 ## Links
 
-- 📦 [npm](https://www.npmjs.com/package/@elliotllliu/agentshield)
+- 📦 [npm](https://www.npmjs.com/package/@elliotllliu/agent-shield)
 - 📖 [Rule Documentation](docs/rules.md)
 - 🇨🇳 [中文 README](README.zh-CN.md)
 

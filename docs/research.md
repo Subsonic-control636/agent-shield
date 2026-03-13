@@ -46,7 +46,7 @@
 | 企业级监控 | ❌ | ✅ Background Mode |
 | Web UI | ✅ 有 | ❌ |
 | GitHub Action | ✅ 有 | ❌ |
-| 配置系统 | ✅ .agentshield.yml | ❌ |
+| 配置系统 | ✅ .agent-shield.yml | ❌ |
 | FP 检测 | ✅ 上下文感知 | 不明确 |
 
 ## 二、行业趋势（YouTube/博客）
@@ -89,7 +89,7 @@
 **优先级: P1**
 - 扫描 `~/.claude/`, `~/.cursor/`, `~/.vscode/mcp.json`
 - 列出所有已安装的 MCP server 和 skills
-- `agentshield discover` 命令
+- `agent-shield discover` 命令
 
 #### 4. Toxic Flow 分析（跨工具数据流）
 **优先级: P1**
@@ -133,7 +133,7 @@
 
 #### 11. 社区规则市场
 - 用户可以发布和安装自定义规则
-- `agentshield install-rule @someone/custom-rule`
+- `agent-shield install-rule @someone/custom-rule`
 
 ## 四、执行计划
 
@@ -141,7 +141,7 @@
 |------|------|--------|---------|
 | 1 | Prompt Injection 检测（SKILL.md + MCP description） | P0 | 2-3h |
 | 2 | Tool Poisoning/Shadowing 检测 | P0 | 2-3h |
-| 3 | `agentshield discover` 自动发现 agent 配置 | P1 | 2h |
+| 3 | `agent-shield discover` 自动发现 agent 配置 | P1 | 2h |
 | 4 | Toxic Flow 简化版 | P1 | 3h |
 | 5 | 部署 Web 版到公网 | P1 | 1h |
 | 6 | GitHub Action 增强（PR comment） | P2 | 2h |

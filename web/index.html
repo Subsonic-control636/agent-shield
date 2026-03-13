@@ -112,6 +112,20 @@
       padding: 1rem; color: #f85149; display: none;
     }
 
+    /* Features */
+    .features {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .feature-card {
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      padding: 1rem;
+    }
+    .feature-card .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .feature-card h4 { color: #58a6ff; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .feature-card p { color: #8b949e; font-size: 0.8rem; line-height: 1.4; }
+    @media (max-width: 600px) { .features { grid-template-columns: 1fr; } }
+
     /* Footer */
     .footer {
       text-align: center; margin-top: 3rem; padding-top: 2rem;
@@ -134,7 +148,8 @@
     <div class="header">
       <h1>🛡️ <span>AgentShield</span></h1>
       <p>Security scanner for AI agent skills, MCP servers & plugins</p>
-      <p class="stat">16 rules • 50ms scans • Zero config</p>
+      <p class="stat">30 rules • AST taint tracking • Cross-file analysis • Kill chain detection</p>
+      <p style="color:#8b949e;font-size:0.85rem;margin-top:0.5rem;">Free &amp; open source · 100% offline · Zero config · <code style="background:#161b22;padding:0.15rem 0.4rem;border-radius:4px;">npx @elliotllliu/agentshield scan</code></p>
     </div>
 
     <form class="scan-form" onsubmit="doScan(event)">
@@ -147,6 +162,39 @@
       <a href="#" onclick="tryExample('https://github.com/vercel-labs/agent-skills')">vercel-labs/agent-skills</a>
       <a href="#" onclick="tryExample('https://github.com/anthropics/skills')">anthropics/skills</a>
       <a href="#" onclick="tryExample('https://github.com/google-labs-code/stitch-skills')">google-labs-code/stitch-skills</a>
+    </div>
+
+    <div class="features">
+      <div class="feature-card">
+        <div class="icon">🔍</div>
+        <h4>Cross-File Analysis</h4>
+        <p>Tracks data flow across files — catches exfiltration chains that single-file scanners miss.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">⛓️</div>
+        <h4>Kill Chain Detection</h4>
+        <p>5-stage model: Recon → Access → Collection → Exfil → Persistence.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🐍</div>
+        <h4>AST Taint Tracking</h4>
+        <p>Python AST analysis — distinguishes <code>eval("safe")</code> from <code>eval(user_input)</code>.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🌍</div>
+        <h4>8-Language Injection</h4>
+        <p>Prompt injection in 中/日/韓/俄/阿/西/法/德 — not just English.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🎭</div>
+        <h4>Description Integrity</h4>
+        <p>Detects tools that lie: "read-only calculator" that makes network requests.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📊</div>
+        <h4>30 Rules, 100% F1</h4>
+        <p>57 benchmark samples. Zero false positives at high severity. 493 Dify plugins validated.</p>
+      </div>
     </div>
 
     <div class="loading" id="loading">
@@ -179,9 +227,12 @@
       <p>
         <a href="https://github.com/elliotllliu/agentshield">GitHub</a> •
         <a href="https://www.npmjs.com/package/@elliotllliu/agentshield">npm</a> •
-        <a href="https://github.com/elliotllliu/agentshield/blob/main/docs/clawhub-security-report.md">Security Report</a>
+        <a href="https://github.com/elliotllliu/agentshield/blob/main/docs/rules.md">30 Rules</a>
       </p>
-      <p style="margin-top: 0.5rem;">
+      <p style="margin-top:0.5rem;color:#8b949e;font-size:0.8rem;">
+        v0.4.x · 30 rules · AST + cross-file + kill chain · Free &amp; open source
+      </p>
+      <p style="margin-top:0.5rem;">
         CLI: <code style="background:#161b22;padding:0.2rem 0.4rem;border-radius:4px;">npx @elliotllliu/agentshield scan ./skill/</code>
       </p>
     </div>
@@ -268,11 +319,11 @@
       const list = document.getElementById('findings-list');
       list.innerHTML = '';
 
-      for (const severity of ['critical', 'warning', 'info']) {
+      for (const severity of ['high', 'critical', 'medium', 'warning', 'low', 'info']) {
         const group = findings.filter(f => f.severity === severity);
         if (group.length === 0) continue;
 
-        const icons = { critical: '🔴 CRITICAL', warning: '🟡 WARNING', info: '🟢 INFO' };
+        const icons = { high: '🔴 HIGH', critical: '🔴 HIGH', medium: '🟡 MEDIUM', warning: '🟡 MEDIUM', low: '🟢 LOW', info: '🟢 LOW' };
         const section = document.createElement('div');
         section.className = 'findings-section';
         section.innerHTML = `<div class="findings-header">${icons[severity]} (${group.length})</div>`;
