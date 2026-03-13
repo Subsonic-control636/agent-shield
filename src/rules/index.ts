@@ -17,6 +17,7 @@ import { networkSsrfRule } from "./network-ssrf.js";
 import { mcpManifestRule } from "./mcp-manifest.js";
 import { promptInjection } from "./prompt-injection.js";
 import { toolShadowing } from "./tool-shadowing.js";
+import { skillRisks } from "./skill-risks.js";
 
 /** All registered rules */
 export const rules: Rule[] = [
@@ -41,6 +42,8 @@ export const rules: Rule[] = [
   // Prompt injection & tool shadowing
   promptInjection,
   toolShadowing,
+  // Skill risk assessment
+  skillRisks,
 ];
 
 /** Get a rule by ID */

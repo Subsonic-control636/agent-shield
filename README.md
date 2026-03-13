@@ -21,12 +21,12 @@ AI agents install and execute third-party skills, MCP servers, and plugins with 
 - ⛏️ **Mine crypto** — hijack compute for cryptocurrency mining
 - 🕵️ **Bypass permissions** — claim "read-only" but execute shell commands
 
-AgentShield catches these patterns with **18 security rules** in under 50ms. Add `--ai` for LLM-powered deep analysis.
+AgentShield catches these patterns with **19 security rules** in under 50ms. Add `--ai` for LLM-powered deep analysis.
 
 ## Quick Start
 
 ```bash
-# Static analysis (18 rules, offline, ~50ms)
+# Static analysis (19 rules, offline, ~50ms)
 npx @elliotllliu/agentshield scan ./my-skill/
 
 # AI-powered deep analysis
@@ -66,6 +66,7 @@ npx @elliotllliu/agentshield discover
 | `excessive-perms` | Too many or dangerous permissions in SKILL.md |
 | `phone-home` | `setInterval` + HTTP requests (beacon/C2 heartbeat pattern) |
 | `mcp-manifest` | MCP server: wildcard perms, undeclared capabilities, suspicious tool descriptions |
+| `skill-risks` | Financial ops, untrusted content, external deps, system modification, credential handling |
 
 ### 🎯 Prompt Injection Detection — 55+ Patterns
 
@@ -262,7 +263,7 @@ __tests__/
 
 | Feature | AgentShield | Snyk Agent Scan | npm audit | ESLint Security |
 |---------|------------|-----------------|-----------|-----------------|
-| AI skill/MCP specific rules | ✅ 18 rules | ✅ 15+ rules | ❌ | ❌ |
+| AI skill/MCP specific rules | ✅ 19 rules | ✅ 15+ rules | ❌ | ❌ |
 | Prompt injection detection | ✅ regex + AI | ✅ LLM (cloud) | ❌ | ❌ |
 | Tool poisoning/shadowing | ✅ | ✅ | ❌ | ❌ |
 | Agent auto-discovery | ✅ 10 agents | ✅ | ❌ | ❌ |
