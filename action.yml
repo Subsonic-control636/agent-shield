@@ -1,5 +1,5 @@
 name: 'AgentShield Security Scan'
-description: 'Scan AI agent skills, MCP servers, and plugins for security vulnerabilities'
+description: 'Scan AI agent skills, MCP servers, and plugins for security vulnerabilities. Supports SARIF output for GitHub Code Scanning.'
 author: 'Elliot Liu'
 
 branding:
@@ -19,6 +19,14 @@ inputs:
     description: 'Output format: terminal or json'
     required: false
     default: 'terminal'
+  sarif:
+    description: 'Generate SARIF output for GitHub Code Scanning'
+    required: false
+    default: 'false'
+  sarif-file:
+    description: 'SARIF output file path'
+    required: false
+    default: 'agent-shield-results.sarif'
 
 outputs:
   score:
@@ -27,6 +35,18 @@ outputs:
   findings:
     description: 'Number of findings'
     value: ${{ steps.scan.outputs.findings }}
+  high:
+    description: 'Number of high-risk findings'
+    value: ${{ steps.scan.outputs.high }}
+  medium:
+    description: 'Number of medium-risk findings'
+    value: ${{ steps.scan.outputs.medium }}
+  low:
+    description: 'Number of low-risk findings'
+    value: ${{ steps.scan.outputs.low }}
+  sarif-file:
+    description: 'Path to SARIF output file (if sarif=true)'
+    value: ${{ steps.scan.outputs.sarif_file }}
 
 runs:
   using: 'composite'
@@ -40,31 +60,74 @@ runs:
       id: scan
       shell: bash
       run: |
-        # Build args
-        ARGS="${{ inputs.path }}"
-
-        if [ "${{ inputs.format }}" = "json" ]; then
-          ARGS="$ARGS --json"
-        fi
-
+        SCAN_PATH="${{ inputs.path }}"
         FAIL_UNDER="${{ inputs.fail-under }}"
+        FORMAT="${{ inputs.format }}"
+        SARIF="${{ inputs.sarif }}"
+        SARIF_FILE="${{ inputs.sarif-file }}"
+
+        # Build scan args
+        ARGS="scan $SCAN_PATH --json"
+
         if [ -n "$FAIL_UNDER" ]; then
           ARGS="$ARGS --fail-under $FAIL_UNDER"
         fi
 
-        # Run scan and capture output
+        # Run scan
         set +e
-        OUTPUT=$(npx -y @elliotllliu/agent-shield scan $ARGS 2>&1)
-        EXIT_CODE=$?
+        OUTPUT=$(npx -y @elliotllliu/agent-shield $ARGS 2>&1)
+        SCAN_EXIT=$?
         set -e
 
-        echo "$OUTPUT"
-
-        # Extract score from JSON output or terminal output
-        SCORE=$(echo "$OUTPUT" | grep -oP 'Score: \K[0-9]+' || echo "$OUTPUT" | python3 -c "import sys,json; print(json.load(sys.stdin)['score'])" 2>/dev/null || echo "unknown")
-        FINDINGS=$(echo "$OUTPUT" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['findings']))" 2>/dev/null || echo "unknown")
+        # Parse JSON output
+        SCORE=$(echo "$OUTPUT" | grep -o '"score":[0-9]*' | head -1 | cut -d: -f2 || echo "unknown")
+        FINDINGS=$(echo "$OUTPUT" | grep -o '"totalFindings":[0-9]*' | head -1 | cut -d: -f2 || echo "0")
+        HIGH=$(echo "$OUTPUT" | grep -o '"high":[0-9]*' | head -1 | cut -d: -f2 || echo "0")
+        MEDIUM=$(echo "$OUTPUT" | grep -o '"medium":[0-9]*' | head -1 | cut -d: -f2 || echo "0")
+        LOW=$(echo "$OUTPUT" | grep -o '"low":[0-9]*' | head -1 | cut -d: -f2 || echo "0")
 
         echo "score=$SCORE" >> "$GITHUB_OUTPUT"
         echo "findings=$FINDINGS" >> "$GITHUB_OUTPUT"
+        echo "high=$HIGH" >> "$GITHUB_OUTPUT"
+        echo "medium=$MEDIUM" >> "$GITHUB_OUTPUT"
+        echo "low=$LOW" >> "$GITHUB_OUTPUT"
 
-        exit $EXIT_CODE
+        # Generate SARIF if requested
+        if [ "$SARIF" = "true" ]; then
+          npx -y @elliotllliu/agent-shield scan $SCAN_PATH --sarif -o "$SARIF_FILE" 2>/dev/null || true
+          echo "sarif_file=$SARIF_FILE" >> "$GITHUB_OUTPUT"
+        fi
+
+        # Write Step Summary
+        {
+          echo "## 🛡️ AgentShield Scan Results"
+          echo ""
+          echo "| Metric | Value |"
+          echo "|--------|-------|"
+          echo "| Score | **${SCORE}/100** |"
+          echo "| 🔴 High | ${HIGH} |"
+          echo "| 🟡 Medium | ${MEDIUM} |"
+          echo "| 🟢 Low | ${LOW} |"
+          echo "| Total Findings | ${FINDINGS} |"
+          echo ""
+          if [ "$SCORE" != "unknown" ]; then
+            if [ "$SCORE" -ge 90 ] 2>/dev/null; then
+              echo "✅ **Low Risk** — safe to use"
+            elif [ "$SCORE" -ge 70 ] 2>/dev/null; then
+              echo "🟡 **Moderate Risk** — review warnings"
+            elif [ "$SCORE" -ge 40 ] 2>/dev/null; then
+              echo "🟠 **High Risk** — investigate before using"
+            else
+              echo "🔴 **Critical Risk** — do not install"
+            fi
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        # Print terminal output if not json format
+        if [ "$FORMAT" != "json" ]; then
+          npx -y @elliotllliu/agent-shield scan $SCAN_PATH 2>&1 || true
+        else
+          echo "$OUTPUT"
+        fi
+
+        exit $SCAN_EXIT
