@@ -214,9 +214,11 @@ const INJECTION_PATTERNS = [
 
 // Suspicious URL patterns in skills
 const SUSPICIOUS_URL_PATTERNS: Array<{ pattern: RegExp; description: string }> = [
-  { pattern: /curl\s+(?:-[sS]\s+)?https?:\/\/(?!github\.com|raw\.githubusercontent|npmjs\.com|pypi\.org)/i, description: "Downloads from non-standard source" },
-  { pattern: /wget\s+(?:-q\s+)?https?:\/\/(?!github\.com|raw\.githubusercontent)/i, description: "Downloads from non-standard source" },
-  { pattern: /\|\s*(?:bash|sh|zsh|python|node|eval)/i, description: "Pipes download output to execution" },
+  { pattern: /curl\s+(?:-[sS]\s+)?https?:\/\/(?!github\.com|raw\.githubusercontent|npmjs\.com|pypi\.org|localhost|127\.0\.0\.1|0\.0\.0\.0)[^\s|]+\s*\|\s*(?:bash|sh)/i, description: "Downloads from non-standard source and pipes to shell" },
+  { pattern: /wget\s+(?:-q\s+)?https?:\/\/(?!github\.com|raw\.githubusercontent)[^\s|]+\s*(?:&&|\;)\s*(?:bash|sh|chmod)/i, description: "Downloads and executes from non-standard source" },
+  // Only flag pipe-to-shell when preceded by curl/wget (downloading + executing)
+  // This is genuinely risky even from trusted sources, but lower severity for known hosts
+  { pattern: /(?:curl|wget)\s+[^|]*\|\s*(?:bash|sh|zsh|python[3]?|node|perl|ruby)\b/i, description: "Pipes download output to shell execution" },
   { pattern: /(?:bit\.ly|tinyurl|t\.co|goo\.gl|is\.gd|shorturl)\//i, description: "URL shortener (obscures destination)" },
   { pattern: /(?:pastebin\.com|hastebin\.com|paste\.ee|ghostbin)/i, description: "Paste site (potential malicious payload host)" },
   // Webhook/callback exfiltration endpoints

@@ -1,7 +1,7 @@
 # AgentShield Benchmark Results
 
-Generated: 2026-03-13T05:59:31.267Z
-Duration: 353ms
+Generated: 2026-03-13T06:03:16.634Z
+Duration: 256ms
 
 ## Summary
 
@@ -38,7 +38,7 @@ Duration: 353ms
 | malicious/11-subtle-injection.md | ✅ | 0 | 0 | 0 | prompt-injection |
 | malicious/12-crypto-miner.py | ✅ | 0 | 4 | 0 | crypto-mining |
 | malicious/12-suspicious-urls.md | ✅ | 0 | 0 | 0 | prompt-injection |
-| malicious/13-data-exfil.py | ✅ | 1 | 1 | 0 | data-exfil, env-leak, sensitive-read, skill-risks |
+| malicious/13-data-exfil.py | ✅ | 3 | 1 | 0 | data-exfil, attack-chain, env-leak, sensitive-read, skill-risks |
 | malicious/13-skill-risks.md | ✅ | 0 | 0 | 0 | skill-risks |
 | malicious/14-env-exfil.py | ✅ | 0 | 0 | 0 | sensitive-read |
 | malicious/14-multilang-injection.md | ✅ | 0 | 0 | 0 | prompt-injection |
