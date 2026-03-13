@@ -12,7 +12,7 @@ Catch data exfiltration, backdoors, prompt injection, tool poisoning, and supply
 
 **Offline-first. AST-powered. Open source. Your data never leaves your machine.**
 
-> 🆚 **vs Snyk Agent Scan:** AgentShield has **30 rules** (vs Snyk's 6 issue codes), runs 100% locally, and provides capabilities Snyk can't: cross-file analysis, kill chain detection, taint tracking, and multi-language injection detection.
+> 🆚 **vs Snyk Agent Scan:** AgentShield has **31 rules** (vs Snyk's 6 issue codes), runs 100% locally, and provides capabilities Snyk can't: cross-file analysis, kill chain detection, taint tracking, and multi-language injection detection.
 
 ## Why AgentShield?
 
@@ -25,12 +25,12 @@ AI agents install and execute third-party skills, MCP servers, and plugins with 
 - 🎭 **Shadow tools** — override legitimate tools with malicious versions
 - ⛓️ **Chain attacks** — combine reconnaissance → access → exfiltration in multi-step kill chains
 
-AgentShield catches these patterns with **30 security rules**, **Python AST taint tracking**, and **cross-file correlation analysis**.
+AgentShield catches these patterns with **31 security rules**, **Python AST taint tracking**, and **cross-file correlation analysis**.
 
 ## Quick Start
 
 ```bash
-# Scan a skill/plugin (30 rules, offline, <1s)
+# Scan a skill/plugin (31 rules, offline, <1s)
 npx @elliotllliu/agent-shield scan ./my-skill/
 
 # Scan Dify plugins (.difypkg archives)
@@ -255,6 +255,15 @@ npx @elliotllliu/agent-shield init
 # Watch mode
 npx @elliotllliu/agent-shield watch ./skill/
 
+# HTML report
+npx @elliotllliu/agent-shield scan ./skill/ --html
+npx @elliotllliu/agent-shield scan ./skill/ --html -o report.html
+
+# Runtime MCP proxy (monitor tool calls in real-time)
+npx @elliotllliu/agent-shield proxy node my-mcp-server.js
+npx @elliotllliu/agent-shield proxy --enforce python mcp_server.py
+npx @elliotllliu/agent-shield proxy --rate-limit 30 --log alerts.jsonl node server.js
+
 # Security badge for your README
 npx @elliotllliu/agent-shield badge ./skill/
 ```
@@ -459,7 +468,7 @@ Store the JSON, render the badge. That's it.
 
 | Feature | AgentShield | Snyk Agent Scan |
 |---------|------------|-----------------|
-| Security rules | **30** | 6 issue codes |
+| Security rules | **31** | 6 issue codes |
 | Cross-file analysis | ✅ import graph + data flow | ❌ single file only |
 | Kill chain detection | ✅ 5-stage model | ❌ |
 | AST taint tracking | ✅ Python ast module | ❌ |
@@ -503,20 +512,36 @@ Store the JSON, render the badge. That's it.
 
 ## Benchmark
 
-113 samples covering prompt injection, data exfiltration, backdoors, reverse shells, supply chain attacks, multi-language injection, and more.
+120 samples covering prompt injection, data exfiltration, backdoors, reverse shells, supply chain attacks, multi-language injection, and more.
 
 | Metric | Value |
 |--------|-------|
-| Samples | **113** (55 malicious + 62 benign) |
-| Recall | **96.2%** |
+| Samples | **120** (56 malicious + 64 benign) |
+| Recall | **100.0%** |
 | Precision | **100%** |
-| F1 Score | **98.0%** |
+| F1 Score | **100.0%** |
 | False Positive Rate | **0%** |
-| Accuracy | **98.2%** |
+| Accuracy | **100.0%** |
 
 Malicious samples include: `eval`/`exec` injection, reverse shells, credential exfiltration, crypto mining, pickle deserialization, SQL injection, SSTI, postinstall backdoors, remote code execution, hidden miners, persistence via crontab, and prompt injection in 8 languages (English, Chinese, Japanese, Korean, Russian, Spanish, French, Arabic).
 
 Benign samples include: utility libraries, MCP tool configs, shell scripts, data converters, validators, and standard development tools — all correctly identified as safe.
+
+## Ecosystem
+
+### 🤖 GitHub App
+Auto-scan every PR for security issues. [Learn more →](github-app/README.md)
+
+### 💻 VS Code Extension
+Real-time security diagnostics in your editor. [Learn more →](vscode-extension/README.md)
+
+### 🔒 Runtime MCP Proxy
+Monitor MCP server behavior in real-time. Detect injection, exfiltration, and rug-pull attacks.
+
+```bash
+# Insert AgentShield between client and server
+agent-shield proxy --enforce node my-mcp-server.js
+```
 
 ## Contributing
 
@@ -526,6 +551,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new rules.
 
 - 📦 [npm](https://www.npmjs.com/package/@elliotllliu/agent-shield)
 - 📖 [Rule Documentation](docs/rules.md)
+- 🤖 [GitHub App](github-app/README.md)
+- 💻 [VS Code Extension](vscode-extension/README.md)
 - 🔌 [Integration Guide](docs/integration-guide.md) — Add AgentShield to your platform
 - 🇨🇳 [中文 README](README.zh-CN.md)
 
