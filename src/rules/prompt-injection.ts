@@ -96,7 +96,8 @@ const HIDDEN_INSTRUCTIONS: Array<{ pattern: RegExp; description: string; severit
 // ============================================================
 const BEHAVIORAL_HIJACKING: Array<{ pattern: RegExp; description: string; severity: "medium" | "medium" }> = [
   { pattern: /(?:you\s+must|always|never)\s+(?:call|use|invoke|execute|run)\s+(?:this|the|my)\s+tool/i, description: "Forces agent to call specific tools", severity: "medium" },
-  { pattern: /(?:do\s+not|never|don'?t)\s+(?:ask|check|verify|validate|confirm)\s+(?:the\s+user|before|permission)/i, description: "Attempts to bypass user confirmation", severity: "medium" },
+  // "do not ask the user" — only flag if followed by action-oriented verbs, not general UX guidance
+  { pattern: /(?:do\s+not|never|don'?t)\s+(?:ask|check|verify|validate|confirm)\s+(?:the\s+user|before|permission)\s+(?:about|for|if|whether)?\s*(?:permission|consent|approval|safety|security)/i, description: "Attempts to bypass user confirmation", severity: "medium" },
   { pattern: /(?:before|after)\s+(?:any|every|each)\s+(?:action|request|call|tool),?\s+(?:first\s+)?(?:call|use|invoke|run)/i, description: "Injects mandatory pre/post actions", severity: "medium" },
   { pattern: /(?:silently|quietly|secretly|without\s+(?:telling|informing|notifying))\s+(?:send|post|upload|transmit|exfiltrate)/i, description: "Instructs covert data transmission", severity: "medium" },
   // Concealment patterns (from Invariant Labs TPA research)
@@ -112,7 +113,8 @@ const BEHAVIORAL_HIJACKING: Array<{ pattern: RegExp; description: string; severi
 // Category 6: Tool poisoning (MCP-specific from Invariant Labs)
 // ============================================================
 const TOOL_POISONING: Array<{ pattern: RegExp; description: string; severity: "medium" | "medium" }> = [
-  { pattern: /(?:important|crucial|critical|essential|vital)\s*(?::|!)\s*(?:always|never|you must|do not)/i, description: "Urgency-based behavioral directive in description", severity: "medium" },
+  // Urgency keyword + behavioral directive — but NOT when used as a section header or warning label
+  { pattern: /(?:important|crucial|critical|essential|vital)\s*(?::|!)\s*(?:always|you must|do not\s+(?:reveal|share|expose|send|output))/i, description: "Urgency-based behavioral directive in description", severity: "medium" },
   { pattern: /(?:this\s+tool\s+)?(?:requires|needs|demands)\s+(?:that\s+)?(?:you|the\s+agent)\s+(?:first|also|always)/i, description: "Tool description imposes agent requirements", severity: "medium" },
   // TPA: Tool requiring reading unrelated files
   { pattern: /(?:before\s+(?:using|calling|running)\s+this\s+tool|otherwise\s+(?:the\s+tool|it)\s+will\s+not\s+work),?\s+(?:read|access|open|load|get)\s+/i, description: "TPA: tool demands reading files before execution", severity: "medium" },
@@ -128,7 +130,8 @@ const TOOL_POISONING: Array<{ pattern: RegExp; description: string; severity: "m
 // ============================================================
 const DATA_EXFILTRATION: Array<{ pattern: RegExp; description: string; severity: "medium" | "medium" }> = [
   { pattern: /(?:send|transmit|forward|exfiltrate|copy)\s+(?:all|the|this|entire)\s+(?:conversation|chat)\s+(?:history|data|log|context)\s+(?:to|at)\s+/i, description: "Instructs exfiltration of conversation data", severity: "medium" },
-  { pattern: /(?:include|append|attach|embed)\s+(?:the\s+)?(?:api\s+key|token|password|secret|credential|ssh\s+key)/i, description: "Attempts to extract credentials via prompt", severity: "medium" },
+  // Only flag extraction attempts, not security guidance about protecting credentials
+  { pattern: /(?:include|append|attach|embed)\s+(?:the\s+)?(?:api\s+key|token|password|secret|credential|ssh\s+key)\s+(?:in|to|into|with)\s+(?:the|your|this|a)\s+(?:response|output|reply|message|request|url|body|payload)/i, description: "Attempts to extract credentials via prompt", severity: "medium" },
   // File read for exfiltration (from Invariant Labs TPA)
   { pattern: /(?:read|access|open|cat|load|get\s+the\s+contents?\s+of)\s+(?:~\/|\/(?:home|root|etc|var)\/)[\w.\-\/]*(?:\.ssh|\.aws|\.env|\.cursor|\.claude|mcp\.json|credentials|config\.json|id_rsa|\.gnupg)/i, description: "TPA: reads sensitive files for exfiltration", severity: "medium" },
   { pattern: /(?:read|access|open)\s+[`'"]?~\/\.(?:ssh|aws|cursor|claude|vscode|config|gnupg|npm|pypirc|docker|kube)/i, description: "TPA: reads sensitive dotfile directories", severity: "medium" },

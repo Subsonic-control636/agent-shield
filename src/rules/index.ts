@@ -21,6 +21,7 @@ import { skillRisks } from "./skill-risks.js";
 import { toxicFlow } from "./toxic-flow.js";
 import { pythonSecurityRule } from "./python-security.js";
 import { crossFileRule } from "./cross-file.js";
+import { attackChainRule } from "./attack-chain.js";
 
 /** All registered rules */
 export const rules: Rule[] = [
@@ -53,6 +54,8 @@ export const rules: Rule[] = [
   pythonSecurityRule,
   // Cross-file correlation analysis
   crossFileRule,
+  // Multi-step attack chain detection
+  attackChainRule,
 ];
 
 /** Get a rule by ID */

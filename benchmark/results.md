@@ -1,7 +1,7 @@
 # AgentShield Benchmark Results
 
-Generated: 2026-03-13T04:10:54.548Z
-Duration: 248ms
+Generated: 2026-03-13T05:59:31.267Z
+Duration: 353ms
 
 ## Summary
 
@@ -32,52 +32,52 @@ Duration: 248ms
 | malicious/07-data-exfiltration.md | ✅ | 0 | 0 | 0 | sensitive-read, prompt-injection |
 | malicious/08-encoding-evasion.md | ✅ | 0 | 0 | 0 | prompt-injection |
 | malicious/09-advanced-attacks.md | ✅ | 0 | 0 | 0 | sensitive-read, prompt-injection |
-| malicious/10-backdoor-eval.py | ✅ | 3 | 0 | 0 | backdoor |
+| malicious/10-backdoor-eval.py | ✅ | 3 | 4 | 0 | backdoor, python-security |
 | malicious/10-mcp-config-attacks.md | ✅ | 0 | 2 | 0 | tool-shadowing, sensitive-read, prompt-injection |
-| malicious/11-credential-leak.py | ✅ | 0 | 4 | 0 | sensitive-read, credential-hardcode |
+| malicious/11-credential-leak.py | ✅ | 0 | 3 | 0 | credential-hardcode, sensitive-read |
 | malicious/11-subtle-injection.md | ✅ | 0 | 0 | 0 | prompt-injection |
 | malicious/12-crypto-miner.py | ✅ | 0 | 4 | 0 | crypto-mining |
 | malicious/12-suspicious-urls.md | ✅ | 0 | 0 | 0 | prompt-injection |
-| malicious/13-data-exfil.py | ✅ | 2 | 4 | 0 | data-exfil, env-leak, sensitive-read, skill-risks |
+| malicious/13-data-exfil.py | ✅ | 1 | 1 | 0 | data-exfil, env-leak, sensitive-read, skill-risks |
 | malicious/13-skill-risks.md | ✅ | 0 | 0 | 0 | skill-risks |
-| malicious/14-env-exfil.py | ✅ | 1 | 1 | 0 | data-exfil, sensitive-read |
+| malicious/14-env-exfil.py | ✅ | 0 | 0 | 0 | sensitive-read |
 | malicious/14-multilang-injection.md | ✅ | 0 | 0 | 0 | prompt-injection |
 | malicious/15-reverse-shell.sh | ✅ | 0 | 2 | 0 | reverse-shell |
-| malicious/15-toxic-flow-config.json | ✅ | 2 | 0 | 0 |  |
-| malicious/16-phone-home.py | ✅ | 1 | 1 | 0 | backdoor, phone-home |
-| malicious/17-obfuscated-payload.py | ✅ | 3 | 0 | 0 | backdoor |
+| malicious/15-toxic-flow-config.json | ✅ | 0 | 2 | 0 |  |
+| malicious/16-phone-home.py | ✅ | 1 | 2 | 0 | backdoor, phone-home, python-security |
+| malicious/17-obfuscated-payload.py | ✅ | 3 | 3 | 0 | backdoor, python-security |
 | malicious/18-supply-chain.sh | ✅ | 2 | 0 | 0 | backdoor |
 | malicious/19-ssrf.py | ✅ | 0 | 1 | 0 | network-ssrf |
 | malicious/20-tool-shadow.md | ✅ | 0 | 0 | 0 | prompt-injection |
 | malicious/21-toxic-flow.md | ✅ | 0 | 0 | 0 | prompt-injection |
 | malicious/22-skill-risks.md | ✅ | 0 | 0 | 0 | skill-risks |
-| malicious/23-sensitive-read.py | ✅ | 0 | 6 | 0 | sensitive-read, skill-risks |
+| malicious/23-sensitive-read.py | ✅ | 0 | 0 | 0 | sensitive-read, skill-risks |
 | malicious/24-privilege-escalation.sh | ✅ | 1 | 0 | 0 | backdoor, sensitive-read, skill-risks |
 
 ## Benign Samples
 
 | File | Clean | Critical | Warning | Score |
 |------|-------|----------|---------|-------|
-| benign/01-weather-tool.md | ✅ | 0 | 0 | 95 |
-| benign/02-code-formatter.md | ✅ | 0 | 0 | 95 |
-| benign/03-git-helper.md | ✅ | 0 | 0 | 95 |
-| benign/04-database-query.md | ✅ | 0 | 0 | 95 |
-| benign/05-translation.md | ✅ | 0 | 0 | 95 |
-| benign/06-image-resizer.md | ✅ | 0 | 0 | 95 |
-| benign/07-markdown-preview.md | ✅ | 0 | 0 | 95 |
-| benign/08-calculator.md | ✅ | 0 | 0 | 95 |
-| benign/09-spell-checker.md | ✅ | 0 | 0 | 95 |
-| benign/10-file-search.md | ✅ | 0 | 0 | 95 |
-| benign/11-json-validator.md | ✅ | 0 | 0 | 95 |
-| benign/11-security-tutorial.md | ✅ | 0 | 0 | 95 |
-| benign/12-deployment-script.sh | ✅ | 0 | 0 | 95 |
-| benign/12-test-generator.md | ✅ | 0 | 0 | 95 |
-| benign/13-docker-helper.md | ✅ | 0 | 0 | 95 |
-| benign/13-env-config-example.md | ✅ | 0 | 0 | 95 |
-| benign/14-changelog.md | ✅ | 0 | 0 | 95 |
-| benign/15-api-client.md | ✅ | 0 | 0 | 95 |
-| benign/16-log-analyzer.py | ✅ | 0 | 0 | 95 |
-| benign/17-mcp-tool-legit.json | ✅ | 0 | 0 | 95 |
-| benign/18-cron-healthcheck.py | ✅ | 0 | 1 | 95 |
-| benign/19-base64-codec.py | ✅ | 0 | 0 | 95 |
-| benign/20-subprocess-tool.py | ✅ | 0 | 0 | 95 |
+| benign/01-weather-tool.md | ✅ | 0 | 0 | 86 |
+| benign/02-code-formatter.md | ✅ | 0 | 0 | 86 |
+| benign/03-git-helper.md | ✅ | 0 | 0 | 86 |
+| benign/04-database-query.md | ✅ | 0 | 0 | 86 |
+| benign/05-translation.md | ✅ | 0 | 0 | 86 |
+| benign/06-image-resizer.md | ✅ | 0 | 0 | 86 |
+| benign/07-markdown-preview.md | ✅ | 0 | 0 | 86 |
+| benign/08-calculator.md | ✅ | 0 | 0 | 86 |
+| benign/09-spell-checker.md | ✅ | 0 | 0 | 86 |
+| benign/10-file-search.md | ✅ | 0 | 0 | 86 |
+| benign/11-json-validator.md | ✅ | 0 | 0 | 86 |
+| benign/11-security-tutorial.md | ✅ | 0 | 0 | 86 |
+| benign/12-deployment-script.sh | ✅ | 0 | 0 | 86 |
+| benign/12-test-generator.md | ✅ | 0 | 0 | 86 |
+| benign/13-docker-helper.md | ✅ | 0 | 0 | 86 |
+| benign/13-env-config-example.md | ✅ | 0 | 0 | 86 |
+| benign/14-changelog.md | ✅ | 0 | 0 | 86 |
+| benign/15-api-client.md | ✅ | 0 | 0 | 86 |
+| benign/16-log-analyzer.py | ✅ | 0 | 0 | 86 |
+| benign/17-mcp-tool-legit.json | ✅ | 0 | 0 | 86 |
+| benign/18-cron-healthcheck.py | ✅ | 0 | 1 | 86 |
+| benign/19-base64-codec.py | ✅ | 0 | 0 | 86 |
+| benign/20-subprocess-tool.py | ✅ | 0 | 0 | 86 |
