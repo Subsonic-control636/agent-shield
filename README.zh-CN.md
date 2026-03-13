@@ -151,6 +151,62 @@ eval("{'a': 1}")    # → ✅ 不标记（安全字面量）
 
 **6 个确认高风险插件**存在真实的 `eval()`/`exec()` 执行动态代码。高风险零误报。
 
+## 🔌 将 AgentShield 集成到你的平台
+
+**运营 Skill 目录站、MCP 市场或插件注册中心？** 集成 AgentShield 扫描，给你的用户提供其他平台没有的功能：**每个上架项目都有安全评分。**
+
+### 为什么要集成
+
+2026 年 Snyk 扫描了一个主流 Agent Skill 注册中心，发现 **36% 的 skill 存在安全缺陷** —— 单个平台上发现了 1,467 个恶意 payload。用户把这些工具安装到能访问文件、凭证和 API 的 AI Agent 中。一个恶意 skill 就能窃取一切。
+
+**目前没有任何 skill 目录验证其列出的内容。** 成为第一个。
+
+### 你的平台将获得
+
+| 优势 | 详情 |
+|------|------|
+| 🏆 **信任差异化** | 成为唯一一个用户可以安装前验证的目录 |
+| 🛡️ **安全徽章** | 每个 skill 都有 🟢🟡🟠🔴 评分 —— 风险一目了然 |
+| 🔍 **智能筛选** | 用户按安全等级过滤、按评分排序、隐藏高危 skill |
+| 📊 **发布故事** | "我们扫描了 19,000 个 skill —— 结果如下" —— 自带传播力 |
+| 🆓 **零成本** | MIT 开源，在你的服务器上运行，无 API 费用 |
+| 🔒 **零数据共享** | 100% 离线运行 —— 数据不出你的服务器 |
+| ⚡ **极速** | 每个 skill 约 200ms。10,000 个 skill 约 17 分钟（4 并发） |
+
+### 如何集成
+
+一条命令扫描一个 skill 并返回结构化 JSON：
+
+```bash
+npx -y @elliotllliu/agent-shield scan ./skill --json
+```
+
+返回：
+```json
+{
+  "score": 92,
+  "riskLevel": "low",
+  "filesScanned": 12,
+  "findings": [ ... ]
+}
+```
+
+**完整集成指南（含 Node.js、Python 代码示例、批量扫描脚本、JSON Schema、数据库设计）：**
+
+📖 **[docs/integration-guide.md](docs/integration-guide.md)**
+
+> 把这个链接发给你的开发团队或 AI Agent —— 包含构建集成所需的一切。
+
+### 适合集成的平台
+
+- **Skill 目录站**（如 ClawHub、skills.sh、Agent Skills Hub）
+- **MCP Server 注册中心**（如 mcp.so、Smithery、Glama）
+- **插件市场**（如 Dify 插件商店）
+- **AI Agent 平台**（如 OpenClaw、Cline、Cursor）
+- **企业内部工具注册中心**
+
+---
+
 ## 对比：AgentShield vs Snyk Agent Scan
 
 | 功能 | AgentShield | Snyk Agent Scan |
@@ -207,6 +263,7 @@ jobs:
 
 - 📦 [npm](https://www.npmjs.com/package/@elliotllliu/agent-shield)
 - 📖 [规则文档](docs/rules.md)
+- 🔌 [集成指南](docs/integration-guide.md) — 将 AgentShield 添加到你的平台
 - 🇬🇧 [English README](README.md)
 
 ## 许可证
