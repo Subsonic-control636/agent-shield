@@ -1,6 +1,40 @@
 /** Severity levels for findings — three-tier risk system */
 export type Severity = "high" | "medium" | "low";
 
+/** Grade tiers for scoring system v2 */
+export type Grade = "A" | "B" | "C" | "D" | "F";
+
+/** A single dimension's score breakdown */
+export interface DimensionScore {
+  name: string;
+  score: number; // 0-100
+  deductions: { rule: string; amount: number; count: number }[];
+}
+
+/** Full scoring result from v2 scoring system */
+export interface ScoreResult {
+  overall: number;
+  grade: Grade;
+  gradeLabel: string;
+  dimensions: {
+    codeExec: DimensionScore;
+    dataSafety: DimensionScore;
+    supplyChain: DimensionScore;
+    promptInjection: DimensionScore;
+    codeQuality: DimensionScore;
+  };
+  bonus: number;
+  bonusReasons: string[];
+}
+
+/** Metadata about the scanned project, used for bonus scoring */
+export interface ProjectMeta {
+  fileList: string[];
+  totalLines: number;
+  totalFiles: number;
+  hasNetworkCalls: boolean;
+}
+
 /** Confidence levels for findings */
 export type Confidence = "high" | "medium" | "low";
 
@@ -30,6 +64,7 @@ export interface ScanResult {
   linesScanned: number;
   findings: Finding[];
   score: number;
+  scoreResult?: ScoreResult;
   duration: number;
 }
 

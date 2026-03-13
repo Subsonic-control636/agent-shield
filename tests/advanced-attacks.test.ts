@@ -221,6 +221,6 @@ describe("prompt-injection: advanced-attacks fixture", () => {
     const result = scan("tests/fixtures/advanced-attacks");
     const criticals = result.findings.filter((f: { severity: string }) => f.severity === "medium");
     assert.ok(criticals.length >= 10, `Expected >= 10 criticals, got ${criticals.length}`);
-    assert.ok(result.score <= 10, `Expected score <= 10, got ${result.score}`);
+    assert.ok(result.score <= 40, `Expected score <= 40, got ${result.score}`);
   });
 });

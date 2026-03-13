@@ -189,6 +189,54 @@ agent-shield mcp-audit node server.js                         # One-shot audit
 
 ---
 
+## 🔢 Scoring System v2
+
+AgentShield uses a **5-dimension weighted scoring** system. Each dimension is scored independently, then combined with weights.
+
+### Five Dimensions
+
+| Dimension | Weight | Coverage |
+|-----------|--------|----------|
+| 🔴 Code Execution | 30% | Backdoors, command injection, reverse shells, crypto mining |
+| 🟠 Data Safety | 25% | Credential theft, data exfiltration, sensitive file access |
+| 🟡 Prompt Injection | 20% | Prompt injection, tool poisoning, tool shadowing |
+| 🔵 Supply Chain | 15% | Typosquatting, obfuscation, hidden files |
+| 🟢 Code Quality | 10% | Weak crypto, SSRF, input validation |
+
+### Diminishing Returns
+
+Same-type findings don't stack linearly — **each additional one is penalized at half**:
+
+```
+1st eval(): -20
+2nd eval(): -10 (×0.5)
+3rd eval(): -5  (×0.25)
+Cap: -35 (no more)
+```
+
+### Bonus Points (max +10)
+
+| Practice | Bonus |
+|----------|-------|
+| Has SECURITY.md | +3 |
+| Has LICENSE | +2 |
+| Uses TypeScript | +2 |
+| No high findings | +5 |
+| No outbound network calls | +3 |
+| Small codebase (<500 lines) | +2 |
+
+### Grades
+
+| Score | Grade | Meaning |
+|-------|-------|---------|
+| 90-100 | ✅ A · Safe | No significant risks, safe to install |
+| 75-89 | 🟡 B · Caution | Low risk, worth reviewing |
+| 60-74 | 🟠 C · Warning | Medium risk, review before use |
+| 40-59 | 🔴 D · Danger | High risk, not recommended for production |
+| 5-39 | ⛔ F · Critical | Severe threat, do not install |
+
+---
+
 ## 📈 Benchmark
 
 120 samples (56 malicious + 64 benign) covering prompt injection in 8 languages, data exfiltration, backdoors, reverse shells, supply chain attacks, and more.

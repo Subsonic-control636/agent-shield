@@ -54,18 +54,20 @@ describe("score", () => {
     assert.equal(computeScore([]), 100);
   });
 
-  it("deducts 25 per critical", () => {
+  it("applies diminishing deduction for high severity", () => {
     const findings = [
       { rule: "test", severity: "high" as const, file: "a.ts", message: "bad" },
     ];
-    assert.equal(computeScore(findings), 75);
+    // V2: weighted across dimensions, single high → ~85
+    assert.ok(computeScore(findings) > 80 && computeScore(findings) < 90);
   });
 
-  it("deducts 8 per medium risk", () => {
+  it("applies diminishing deduction for medium severity", () => {
     const findings = [
       { rule: "test", severity: "medium" as const, file: "a.ts", message: "meh" },
     ];
-    assert.equal(computeScore(findings), 92);
+    // V2: single medium → ~94
+    assert.ok(computeScore(findings) > 90);
   });
 
   it("deducts 2 per low risk", () => {
@@ -75,17 +77,19 @@ describe("score", () => {
     assert.equal(computeScore(findings), 98);
   });
 
-  it("clamps to 0", () => {
+  it("diminishing returns prevent score from reaching 0", () => {
     const findings = Array.from({ length: 10 }, () => ({
       rule: "test", severity: "high" as const, file: "a.ts", message: "bad",
     }));
-    assert.equal(computeScore(findings), 0);
+    // V2: diminishing returns + minimum 5 → stays above 0
+    assert.ok(computeScore(findings) >= 5);
   });
 
   it("riskLabel returns correct labels", () => {
-    assert.equal(riskLabel(95), "Low Risk");
-    assert.equal(riskLabel(75), "Moderate Risk");
-    assert.equal(riskLabel(50), "High Risk");
-    assert.equal(riskLabel(20), "Critical Risk");
+    assert.equal(riskLabel(95), "Safe");
+    assert.equal(riskLabel(80), "Caution");
+    assert.equal(riskLabel(65), "Warning");
+    assert.equal(riskLabel(50), "Danger");
+    assert.equal(riskLabel(20), "Critical");
   });
 });

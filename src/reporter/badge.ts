@@ -1,16 +1,18 @@
 import type { ScanResult } from "../types.js";
+import { letterGrade, gradeLabel } from "../score.js";
 
 /**
  * Generate a shields.io-style SVG badge for the security score.
  */
 export function generateBadgeSvg(result: ScanResult): string {
-  const score = result.score;
+  const score = result.scoreResult?.overall ?? result.score;
   const { color, label } = getBadgeStyle(score);
-  const scoreText = `${score}/100`;
+  const grade = letterGrade(score);
+  const scoreText = `${score} (${grade})`;
 
   // Shield dimensions
   const labelWidth = 90;
-  const valueWidth = 60;
+  const valueWidth = 80;
   const totalWidth = labelWidth + valueWidth;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20" role="img" aria-label="AgentShield: ${scoreText}">
@@ -38,15 +40,18 @@ export function generateBadgeSvg(result: ScanResult): string {
 
 /** Generate a markdown badge string */
 export function generateBadgeMarkdown(score: number, repoUrl?: string): string {
-  const { color, label } = getBadgeStyle(score);
-  const badgeUrl = `https://img.shields.io/badge/AgentShield-${score}%2F100-${color.replace("#", "")}?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAxTDMgNXY2YzAgNS41NSAzLjg0IDEwLjc0IDkgMTIgNS4xNi0xLjI2IDktNi40NSA5LTEyVjVsLTktNHoiLz48L3N2Zz4=`;
+  const { color } = getBadgeStyle(score);
+  const grade = letterGrade(score);
+  const badgeUrl = `https://img.shields.io/badge/AgentShield-${encodeURIComponent(`${score} (${grade})`)}-${color.replace("#", "")}?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAxTDMgNXY2YzAgNS41NSAzLjg0IDEwLjc0IDkgMTIgNS4xNi0xLjI2IDktNi40NSA5LTEyVjVsLTktNHoiLz48L3N2Zz4=`;
   const link = repoUrl || "https://github.com/elliotllliu/agent-shield";
-  return `[![AgentShield ${score}/100](${badgeUrl})](${link})`;
+  return `[![AgentShield ${score} (${grade})](${badgeUrl})](${link})`;
 }
 
 function getBadgeStyle(score: number): { color: string; label: string } {
-  if (score >= 90) return { color: "#4c1", label: "Low Risk" };
-  if (score >= 70) return { color: "#dfb317", label: "Moderate Risk" };
-  if (score >= 40) return { color: "#fe7d37", label: "High Risk" };
-  return { color: "#e05d44", label: "Critical Risk" };
+  if (score >= 90) return { color: "#4c1", label: "A · Safe" };
+  if (score >= 75) return { color: "#a3c51c", label: "B · Low Risk" };
+  if (score >= 50) return { color: "#dfb317", label: "C · Elevated Risk" };
+  if (score >= 25) return { color: "#fe7d37", label: "D · High Risk" };
+  if (score >= 0) return { color: "#e05d44", label: "F · Critical" };
+  return { color: "#8b0000", label: "F- · Severe" };
 }

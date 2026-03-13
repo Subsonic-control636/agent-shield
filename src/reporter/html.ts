@@ -1,19 +1,30 @@
-import type { ScanResult, Finding } from "../types.js";
+import type { ScanResult, Finding, ScoreResult } from "../types.js";
 import { riskLabel } from "../score.js";
 
 function escHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+function dimensionBarHtml(label: string, score: number): string {
+  const pct = Math.max(0, Math.min(100, score));
+  const color = pct >= 90 ? "#22c55e" : pct >= 75 ? "#eab308" : pct >= 60 ? "#f97316" : pct >= 40 ? "#ef4444" : "#8b0000";
+  return `<div class="dim-row">
+      <span class="dim-label">${escHtml(label)}</span>
+      <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <span class="dim-score" style="color:${color}">${score}/100</span>
+    </div>`;
+}
+
 export function generateHtmlReport(result: ScanResult): string {
-  const { target, filesScanned, linesScanned, findings, score, duration } = result;
+  const { target, filesScanned, linesScanned, findings, score, scoreResult, duration } = result;
 
   const high = findings.filter(f => f.severity === "high" && !f.possibleFalsePositive);
   const medium = findings.filter(f => f.severity === "medium" && !f.possibleFalsePositive);
   const low = findings.filter(f => f.severity === "low" && !f.possibleFalsePositive);
 
-  const scoreColor = score >= 90 ? "#22c55e" : score >= 70 ? "#eab308" : score >= 40 ? "#f97316" : "#ef4444";
-  const riskText = riskLabel(score);
+  const displayScore = scoreResult ? scoreResult.overall : score;
+  const scoreColor = displayScore >= 90 ? "#22c55e" : displayScore >= 75 ? "#eab308" : displayScore >= 60 ? "#f97316" : displayScore >= 40 ? "#ef4444" : "#8b0000";
+  const riskText = scoreResult ? `${scoreResult.grade} · ${scoreResult.gradeLabel}` : riskLabel(displayScore);
 
   const renderFinding = (f: Finding, i: number) => {
     const loc = f.line ? `${escHtml(f.file)}:${f.line}` : escHtml(f.file);
@@ -25,6 +36,26 @@ export function generateHtmlReport(result: ScanResult): string {
       <td>${escHtml(f.message)}${f.evidence ? `<br><code style="color:#888;font-size:0.85em">${escHtml(f.evidence)}</code>` : ""}</td>
     </tr>`;
   };
+
+  // Dimension bars HTML
+  let dimensionHtml = "";
+  if (scoreResult) {
+    const dims = [
+      { label: "Code Execution", score: scoreResult.dimensions.codeExec.score },
+      { label: "Data Safety", score: scoreResult.dimensions.dataSafety.score },
+      { label: "Supply Chain", score: scoreResult.dimensions.supplyChain.score },
+      { label: "Prompt Injection", score: scoreResult.dimensions.promptInjection.score },
+      { label: "Code Quality", score: scoreResult.dimensions.codeQuality.score },
+    ];
+    dimensionHtml = `
+  <div class="card">
+    <h2 style="margin-bottom:1rem">📊 Dimension Scores</h2>
+    <div class="dim-container">
+      ${dims.map((d) => dimensionBarHtml(d.label, d.score)).join("\n      ")}
+    </div>
+    ${scoreResult.bonus > 0 ? `<p style="margin-top:1rem;color:#22c55e">🏅 Bonus: +${scoreResult.bonus} (${escHtml(scoreResult.bonusReasons.join(", "))})</p>` : ""}
+  </div>`;
+  }
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -59,6 +90,12 @@ export function generateHtmlReport(result: ScanResult): string {
   .footer { text-align: center; color: #484f58; margin-top: 2rem; font-size: 0.85rem; }
   a { color: #58a6ff; text-decoration: none; }
   a:hover { text-decoration: underline; }
+  .dim-container { display: flex; flex-direction: column; gap: 0.75rem; }
+  .dim-row { display: flex; align-items: center; gap: 1rem; }
+  .dim-label { width: 140px; font-size: 0.9rem; color: #c9d1d9; }
+  .dim-bar-bg { flex: 1; height: 12px; background: #21262d; border-radius: 6px; overflow: hidden; }
+  .dim-bar-fill { height: 100%; border-radius: 6px; transition: width 0.3s; }
+  .dim-score { width: 60px; text-align: right; font-weight: 600; font-size: 0.9rem; }
 </style>
 </head>
 <body>
@@ -69,7 +106,7 @@ export function generateHtmlReport(result: ScanResult): string {
   <div class="card">
     <div class="score-section">
       <div class="score-circle">
-        <div class="score-num">${score}</div>
+        <div class="score-num">${displayScore}</div>
         <div class="score-label">${riskText}</div>
       </div>
       <div class="stats">
@@ -92,6 +129,8 @@ export function generateHtmlReport(result: ScanResult): string {
       </div>
     </div>
   </div>
+
+  ${dimensionHtml}
 
   <div class="card">
     <h2 style="margin-bottom:1rem">📊 Summary</h2>

@@ -1,8 +1,8 @@
 import { collectFiles, totalLines } from "./files.js";
 import { rules } from "../rules/index.js";
-import { computeScore } from "../score.js";
+import { computeScore, computeScoreV2 } from "../score.js";
 import { loadConfig, loadIgnorePatterns, isIgnored } from "../config.js";
-import type { ScanResult, Finding, ScanConfig, ScannedFile } from "../types.js";
+import type { ScanResult, Finding, ScanConfig, ScannedFile, ProjectMeta } from "../types.js";
 import type { LlmProvider } from "../llm/types.js";
 
 /** Context types where findings are likely false positives */
@@ -20,6 +20,25 @@ const CONTEXT_FP_RULES: Record<string, Set<string>> = {
   docs: new Set(["data-exfil", "env-leak", "backdoor", "network-ssrf", "sensitive-read", "obfuscation", "crypto-mining", "reverse-shell", "credential-hardcode", "skill-risks"]),
   config: new Set(["data-exfil", "env-leak", "credential-hardcode", "network-ssrf"]),
 };
+
+/** Build ProjectMeta from scanned files for bonus scoring */
+function buildProjectMeta(files: ScannedFile[], findings: Finding[]): ProjectMeta {
+  const fileList = files.map((f) => f.relativePath);
+  const tLines = totalLines(files);
+  const hasNetworkCalls = findings.some(
+    (f) => !f.possibleFalsePositive && (
+      f.rule === "data-exfil" ||
+      f.rule === "phone-home" ||
+      f.rule === "network-ssrf"
+    ),
+  );
+  return {
+    fileList,
+    totalLines: tLines,
+    totalFiles: files.length,
+    hasNetworkCalls,
+  };
+}
 
 /** Run all rules against a target directory */
 export function scan(targetDir: string, configOverride?: Partial<ScanConfig>): ScanResult {
@@ -59,12 +78,16 @@ export function scan(targetDir: string, configOverride?: Partial<ScanConfig>): S
   // Post-process: false positive detection, severity overrides, sorting
   postProcess(findings, files, config);
 
+  const projectMeta = buildProjectMeta(files, findings);
+  const scoreResult = computeScoreV2(findings, projectMeta);
+
   return {
     target: targetDir,
     filesScanned: files.length,
     linesScanned: totalLines(files),
     findings,
     score: computeScore(findings),
+    scoreResult,
     duration: Date.now() - start,
   };
 }
@@ -295,12 +318,16 @@ export async function scanWithLlm(
 
   postProcess(findings, files, config);
 
+  const projectMeta = buildProjectMeta(files, findings);
+  const scoreResult = computeScoreV2(findings, projectMeta);
+
   return {
     target: targetDir,
     filesScanned: files.length,
     linesScanned: totalLines(files),
     findings,
     score: computeScore(findings),
+    scoreResult,
     duration: Date.now() - start,
   };
 }

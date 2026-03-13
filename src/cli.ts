@@ -79,8 +79,9 @@ program
       const files = collectFiles(target);
       const llmFindings = await runLlmAnalysis(files, llmConfig);
       result.findings.push(...llmFindings);
-      const { computeScore } = await import("./score.js");
+      const { computeScore, computeScoreV2 } = await import("./score.js");
       result.score = computeScore(result.findings);
+      result.scoreResult = computeScoreV2(result.findings);
     }
 
     if (options.json) {
@@ -359,8 +360,9 @@ program
       const files = collectFiles(scanDir);
       const llmFindings = await runLlmAnalysis(files, llmConfig);
       result.findings.push(...llmFindings);
-      const { computeScore } = await import("./score.js");
+      const { computeScore, computeScoreV2 } = await import("./score.js");
       result.score = computeScore(result.findings);
+      result.scoreResult = computeScoreV2(result.findings);
     }
 
     if (options.json) {
@@ -371,12 +373,14 @@ program
       console.log();
       if (result.score >= 90) {
         console.log("✅ Safe to install — no significant risks detected.");
-      } else if (result.score >= 70) {
-        console.log("🟡 Moderate risk — review the warnings above before installing.");
+      } else if (result.score >= 75) {
+        console.log("🟡 Caution — review the warnings above before installing.");
+      } else if (result.score >= 60) {
+        console.log("🟠 Warning — investigate findings carefully before using.");
       } else if (result.score >= 40) {
-        console.log("🟠 High risk — investigate findings carefully before using.");
+        console.log("🔴 Danger — significant security issues detected. Not recommended.");
       } else {
-        console.log("🔴 Critical risk — DO NOT install. Serious security issues detected.");
+        console.log("⛔ Critical risk — DO NOT install. Serious security issues detected.");
       }
     }
 

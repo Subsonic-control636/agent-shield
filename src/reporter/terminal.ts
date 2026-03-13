@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import type { ScanResult, Finding } from "../types.js";
+import type { ScanResult, Finding, ScoreResult } from "../types.js";
 import { riskLabel } from "../score.js";
 
 const SEVERITY_ICON: Record<string, string> = {
@@ -15,7 +15,7 @@ const SEVERITY_LINE: Record<string, (s: string) => string> = {
 };
 
 export function printReport(result: ScanResult): void {
-  const { target, filesScanned, linesScanned, findings, score, duration } = result;
+  const { target, filesScanned, linesScanned, findings, score, scoreResult, duration } = result;
 
   const divider = chalk.dim("─".repeat(60));
 
@@ -40,10 +40,40 @@ export function printReport(result: ScanResult): void {
   const medium = findings.filter(f => f.severity === "medium" && !f.possibleFalsePositive).length;
   const low = findings.filter(f => f.severity === "low" && !f.possibleFalsePositive).length;
 
-  const scoreColor = score >= 90 ? chalk.green : score >= 70 ? chalk.yellow : score >= 40 ? chalk.hex("#FF8800") : chalk.red;
-  const scoreBar = generateScoreBar(score);
-  console.log(scoreColor.bold(`Score: ${score}/100`) + "  " + scoreBar + "  " + scoreColor(`(${riskLabel(score)})`));
+  // Use v2 score if available
+  const displayScore = scoreResult ? scoreResult.overall : score;
+  const gradeInfo = scoreResult ? `${scoreResult.grade} · ${scoreResult.gradeLabel}` : riskLabel(displayScore);
+
+  const scoreColor = displayScore >= 90 ? chalk.green : displayScore >= 75 ? chalk.yellow : displayScore >= 50 ? chalk.hex("#FF8800") : displayScore >= 0 ? chalk.red : chalk.redBright;
+  const scoreBar = generateScoreBar(displayScore);
+  console.log(scoreColor.bold(`Score: ${displayScore}/100`) + "  " + scoreBar + "  " + scoreColor(`(${gradeInfo})`));
   console.log();
+
+  // Dimension breakdown (v2)
+  if (scoreResult) {
+    console.log(chalk.bold("📊 Dimension Scores:"));
+    const dims = [
+      { key: "codeExec" as const, label: "Code Execution" },
+      { key: "dataSafety" as const, label: "Data Safety" },
+      { key: "supplyChain" as const, label: "Supply Chain" },
+      { key: "promptInjection" as const, label: "Prompt Injection" },
+      { key: "codeQuality" as const, label: "Code Quality" },
+    ];
+    for (const d of dims) {
+      const dim = scoreResult.dimensions[d.key];
+      const dimColor = dim.score >= 90 ? chalk.green : dim.score >= 75 ? chalk.yellow : dim.score >= 60 ? chalk.hex("#FF8800") : dim.score >= 40 ? chalk.red : chalk.redBright;
+      const bar = generateScoreBar(dim.score);
+      const label = d.label.padEnd(18);
+      console.log(`  ${dimColor(label)} ${dimColor.bold(String(dim.score).padStart(3))}/100 ${bar}`);
+    }
+    console.log();
+
+    // Bonus
+    if (scoreResult.bonus > 0) {
+      console.log(chalk.bold(`🏅 Bonus: +${scoreResult.bonus}`) + chalk.dim(` (${scoreResult.bonusReasons.join(", ")})`));
+      console.log();
+    }
+  }
 
   if (high > 0) console.log(chalk.red(`🔴 High Risk: ${high} finding${high > 1 ? "s" : ""}`));
   if (medium > 0) console.log(chalk.yellow(`🟡 Medium Risk: ${medium} finding${medium > 1 ? "s" : ""}`));
@@ -96,9 +126,11 @@ function formatLines(n: number): string {
 
 function generateScoreBar(score: number): string {
   const width = 20;
-  const filled = Math.round((score / 100) * width);
+  // Normalize: -100..100 → 0..20
+  const normalized = Math.max(0, Math.min(100, score));
+  const filled = Math.round((normalized / 100) * width);
   const empty = width - filled;
-  const color = score >= 90 ? chalk.green : score >= 70 ? chalk.yellow : score >= 40 ? chalk.hex("#FF8800") : chalk.red;
+  const color = score >= 90 ? chalk.green : score >= 75 ? chalk.yellow : score >= 50 ? chalk.hex("#FF8800") : score >= 0 ? chalk.red : chalk.redBright;
   return color("█".repeat(filled)) + chalk.dim("░".repeat(empty));
 }
 

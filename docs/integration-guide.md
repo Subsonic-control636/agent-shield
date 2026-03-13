@@ -1,4 +1,4 @@
-# Agent Shield — Platform Integration Guide
+# Agent Shield - Platform Integration Guide
 
 > Add security scanning to your skill marketplace, MCP directory, or plugin platform.
 
@@ -44,12 +44,13 @@ Your Frontend: badge + detail panel
 
 ## Badge Recommendations
 
-| Score | Display | Suggested Action |
-|-------|---------|-----------------|
-| 90-100 | 🟢 Verified Safe | Auto-approve |
-| 70-89 | 🟡 Minor Issues | Approve with note |
-| 40-69 | 🟠 Review Needed | Manual review |
-| 0-39 | 🔴 High Risk | Block or flag |
+| Score | Grade | Display | Suggested Action |
+|-------|-------|---------|-----------------|
+| 90-100 | A | ✅ Safe | Auto-approve |
+| 75-89 | B | 🟡 Caution | Approve with note |
+| 60-74 | C | 🟠 Warning | Manual review |
+| 40-59 | D | 🔴 Danger | Flag for deep review |
+| 5-39 | F | ⛔ Critical | Block |
 
 ## JSON Output Example
 
@@ -94,38 +95,67 @@ Your Frontend: badge + detail panel
 
 ```typescript
 interface ScanResult {
-  score: number;           // 0-100, integer. 100 = no findings.
-  totalFindings: number;   // sum of all findings
+  score: number;           // 5-100 overall weighted score
+  totalFindings: number;
   findings: Finding[];
   summary: {
-    high: number;          // count of high-severity findings
+    high: number;
     medium: number;
     low: number;
   };
   scannedFiles: number;
   scannedLines: number;
+  scoreResult?: ScoreResult; // v2 detailed breakdown
+}
+
+interface ScoreResult {
+  overall: number;         // 5-100
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  gradeLabel: string;      // e.g. "B · Caution"
+  dimensions: {
+    codeExec: DimensionScore;      // weight 30%
+    dataSafety: DimensionScore;    // weight 25%
+    supplyChain: DimensionScore;   // weight 15%
+    promptInjection: DimensionScore; // weight 20%
+    codeQuality: DimensionScore;   // weight 10%
+  };
+  bonus: number;           // 0-10
+  bonusReasons: string[];
+}
+
+interface DimensionScore {
+  name: string;
+  score: number;           // 0-100
+  deductions: { rule: string; amount: number; count: number }[];
 }
 
 interface Finding {
   severity: 'high' | 'medium' | 'low';
-  rule: string;            // rule ID, e.g. "prompt-injection", "data-exfil", "backdoor"
-  file: string;            // relative file path
-  line: number;            // 1-based line number
-  message: string;         // human-readable description
-  evidence: string;        // code snippet that triggered the rule
+  rule: string;
+  file: string;
+  line: number;
+  message: string;
+  evidence: string;
 }
 ```
 
-## Scoring Formula
+## Scoring Formula (v2)
 
 ```
-score = 100 + sum(penalties)
-penalties:
-  high   finding → -25
-  medium finding → -8
-  low    finding → -2
-  FP-flagged findings → 0 (no penalty)
-score = max(0, score)
+Each finding is assigned to one of 5 dimensions.
+Within each dimension, same-rule findings use diminishing penalties:
+  1st occurrence: full penalty (-20 for high, -10 for medium, -3 for low)
+  2nd occurrence: ×0.5
+  3rd occurrence: ×0.25
+  Per-rule cap prevents runaway deductions.
+
+Dimension scores (0-100) are weighted:
+  overall = codeExec×0.30 + dataSafety×0.25 + promptInj×0.20 + supplyChain×0.15 + codeQuality×0.10
+
+Bonus points (max +10) for security best practices.
+Final score: clamp(overall + bonus, 5, 100)
+
+FP-flagged findings → 0 penalty.
 ```
 
 ## Backend Integration (Node.js)
@@ -181,13 +211,14 @@ try {
 ### Badge (React)
 
 ```jsx
-function SecurityBadge({ score }) {
+function SecurityBadge({ score, grade }) {
   if (score == null) return <span className="badge badge-gray">⚪ Not Scanned</span>;
 
-  const cfg = score >= 90 ? { bg: '#dcfce7', fg: '#16a34a', label: 'Verified Safe', icon: '🟢' }
-    : score >= 70 ? { bg: '#fef9c3', fg: '#ca8a04', label: 'Minor Issues', icon: '🟡' }
-    : score >= 40 ? { bg: '#ffedd5', fg: '#ea580c', label: 'Review Needed', icon: '🟠' }
-    : { bg: '#fee2e2', fg: '#dc2626', label: 'High Risk', icon: '🔴' };
+  const cfg = score >= 90 ? { bg: '#dcfce7', fg: '#16a34a', label: 'Safe', icon: '✅', grade: 'A' }
+    : score >= 75 ? { bg: '#fef9c3', fg: '#ca8a04', label: 'Caution', icon: '🟡', grade: 'B' }
+    : score >= 60 ? { bg: '#ffedd5', fg: '#ea580c', label: 'Warning', icon: '🟠', grade: 'C' }
+    : score >= 40 ? { bg: '#fee2e2', fg: '#dc2626', label: 'Danger', icon: '🔴', grade: 'D' }
+    : { bg: '#fecaca', fg: '#991b1b', label: 'Critical', icon: '⛔', grade: 'F' };
 
   return (
     <span style={{
@@ -195,7 +226,7 @@ function SecurityBadge({ score }) {
       padding: '2px 8px', borderRadius: 12, fontSize: 12,
       backgroundColor: cfg.bg, color: cfg.fg, fontWeight: 600
     }}>
-      {cfg.icon} {score}/100 — {cfg.label}
+      {cfg.icon} {cfg.grade} · {score}/100 - {cfg.label}
     </span>
   );
 }
@@ -275,13 +306,13 @@ CREATE TABLE skill_scans (
 
 ## Constraints for AI Implementors
 
-1. **Always use `--format json`** — other formats are for human consumption only.
-2. **Set timeout to 120s** — large repos may take time; treat timeout as "scan_timeout", not failure.
-3. **maxBuffer ≥ 10MB** — scan output can be large for repos with many findings.
-4. **Parse stdout only** — stderr contains progress info, not results.
+1. **Always use `--format json`** - other formats are for human consumption only.
+2. **Set timeout to 120s** - large repos may take time; treat timeout as "scan_timeout", not failure.
+3. **maxBuffer ≥ 10MB** - scan output can be large for repos with many findings.
+4. **Parse stdout only** - stderr contains progress info, not results.
 5. **Exit code 1 with `--fail-under`** means score is below threshold, but stdout still contains valid JSON.
-6. **Exit code 2** means scan error (invalid target, network issue, etc.) — no JSON output.
-7. **Re-scan periodically** — skill code changes; recommend re-scanning on each version update.
-8. **Do not modify the JSON output** — display it as-is; the score is authoritative.
-9. **Badge must link to detail view** — users should be able to see what was found, not just the score.
+6. **Exit code 2** means scan error (invalid target, network issue, etc.) - no JSON output.
+7. **Re-scan periodically** - skill code changes; recommend re-scanning on each version update.
+8. **Do not modify the JSON output** - display it as-is; the score is authoritative.
+9. **Badge must link to detail view** - users should be able to see what was found, not just the score.
 10. **Include "Scanned by Agent Shield" attribution** with link to the GitHub repo.
