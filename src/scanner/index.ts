@@ -138,8 +138,85 @@ function postProcess(findings: Finding[], files: ScannedFile[], config: ScanConf
       }
     }
   }
+
+  // === Core principle: 宁可漏报，不要误报 ===
+  // Assign confidence levels and enforce strict severity rules:
+  // - Only high-confidence findings keep critical/warning
+  // - Medium-confidence → downgrade to warning at most
+  // - Low-confidence / FP → info only, does not affect score
+  for (const finding of findings) {
+    // Assign confidence if not already set by rule
+    if (!finding.confidence) {
+      finding.confidence = classifyConfidence(finding, files);
+    }
+
+    // Enforce: low confidence → info (does not affect score)
+    if (finding.confidence === "low") {
+      finding.severity = "info";
+    }
+    // Medium confidence → warning at most (never critical)
+    if (finding.confidence === "medium" && finding.severity === "critical") {
+      finding.severity = "warning";
+    }
+    // FP → always info
+    if (finding.possibleFalsePositive) {
+      finding.severity = "info";
+    }
+  }
+
   const severityOrder = { critical: 0, warning: 1, info: 2 };
   findings.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+}
+
+/** Classify finding confidence based on evidence quality and context */
+function classifyConfidence(finding: Finding, files: ScannedFile[]): "high" | "medium" | "low" {
+  const file = files.find(f => f.relativePath === finding.file || f.path === finding.file);
+
+  // High confidence: supply-chain CVEs, explicit injection patterns in SKILL.md
+  if (finding.rule === "supply-chain") return "high";
+
+  // High confidence: prompt injection in SKILL.md or MCP tool descriptions
+  if (finding.rule === "prompt-injection") {
+    const isSkillMd = file?.relativePath.toLowerCase().includes("skill.md");
+    const isMcpConfig = file?.ext === ".json" && file.content.includes("mcpServers");
+    const isPythonMcpServer = file?.ext === ".py" && file.content.includes("@mcp") || file?.content?.includes("McpServer");
+    if (isSkillMd || isMcpConfig || isPythonMcpServer) return "high";
+    // In README/docs, prompt injection patterns are usually examples, not real attacks
+    if (file?.context === "docs") return "low";
+    return "medium";
+  }
+
+  // High confidence: toxic-flow (structural analysis, not pattern matching)
+  if (finding.rule === "toxic-flow") return "high";
+
+  // High confidence: tool-shadowing cross-server conflicts
+  if (finding.rule === "tool-shadowing" && finding.message.includes("conflict")) return "high";
+
+  // Medium confidence: code-level pattern matches (could be legitimate)
+  const codePatternRules = new Set([
+    "data-exfil", "backdoor", "env-leak", "network-ssrf",
+    "sensitive-read", "phone-home", "credential-hardcode",
+  ]);
+  if (codePatternRules.has(finding.rule)) {
+    // Multi-signal = high confidence (e.g., "reads sensitive data AND sends HTTP request")
+    if (finding.message.includes(" and ") || finding.message.includes(" AND ")) return "high";
+    // Pipe-to-shell, eval with dynamic input = high confidence
+    if (finding.message.includes("pipe-to-shell") || finding.message.includes("eval()") || finding.message.includes("exec()")) return "high";
+    // Single signal in source code = medium
+    if (file?.context === "source") return "medium";
+    // In test/deploy/docs context → low
+    return "low";
+  }
+
+  // Medium confidence: skill-risks patterns
+  if (finding.rule === "skill-risks") {
+    const isSkillMd = file?.relativePath.toLowerCase().includes("skill.md");
+    if (isSkillMd) return "high";
+    return "medium";
+  }
+
+  // Default: medium
+  return "medium";
 }
 
 /** LLM-capable file extensions for deep analysis */

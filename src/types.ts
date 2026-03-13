@@ -1,6 +1,9 @@
 /** Severity levels for findings */
 export type Severity = "critical" | "warning" | "info";
 
+/** Confidence levels for findings */
+export type Confidence = "high" | "medium" | "low";
+
 /** File context hints for reducing false positives */
 export type FileContext = "test" | "deploy" | "config" | "docs" | "script" | "source";
 
@@ -12,6 +15,8 @@ export interface Finding {
   line?: number;
   message: string;
   evidence?: string;
+  /** Confidence level: high = confirmed issue, medium = likely issue, low = uncertain */
+  confidence?: Confidence;
   /** If true, the finding is likely a false positive due to file context */
   possibleFalsePositive?: boolean;
   /** Why it might be a false positive */

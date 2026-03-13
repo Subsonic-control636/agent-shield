@@ -3,9 +3,9 @@ import type { ScanResult, Finding } from "../types.js";
 import { riskLabel } from "../score.js";
 
 const SEVERITY_ICON: Record<string, string> = {
-  critical: chalk.red("🔴 CRITICAL"),
-  warning: chalk.yellow("🟡 WARNING"),
-  info: chalk.blue("🟢 INFO"),
+  critical: chalk.red("🔴 CONFIRMED"),
+  warning: chalk.yellow("🟡 UNCERTAIN"),
+  info: chalk.blue("ℹ️  NOTE"),
 };
 
 const SEVERITY_LINE: Record<string, (s: string) => string> = {
@@ -37,7 +37,8 @@ export function printReport(result: ScanResult): void {
       const prefix = i < group.length - 1 ? "  ├─" : "  └─";
       const loc = f.line ? `${f.file}:${f.line}` : f.file;
       const colorize = SEVERITY_LINE[f.severity] || chalk.white;
-      console.log(colorize(`${prefix} ${loc} — [${f.rule}] ${f.message}`));
+      const confLabel = f.confidence === "high" ? "" : f.confidence === "medium" ? " [medium confidence]" : " [needs review]";
+      console.log(colorize(`${prefix} ${loc} — [${f.rule}] ${f.message}${confLabel}`));
       if (f.possibleFalsePositive) {
         const fpPrefix = i < group.length - 1 ? "  │  " : "     ";
         console.log(chalk.dim(`${fpPrefix}⚠️  Likely false positive: ${f.falsePositiveReason}`));

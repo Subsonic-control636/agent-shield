@@ -13,7 +13,7 @@ describe("integration: scan malicious-skill", () => {
     const result = scan(resolve("tests/fixtures/malicious-skill"));
     assert.ok(result.findings.length > 0);
     assert.ok(result.findings.some((f) => f.severity === "critical"));
-    assert.ok(result.score < 30, `score ${result.score} should be < 30`);
+    assert.ok(result.score < 50, `score ${result.score} should be < 50`);
     assert.ok(result.filesScanned >= 2);
     assert.ok(result.duration >= 0);
   });
@@ -61,11 +61,11 @@ describe("score", () => {
     assert.equal(computeScore(findings), 75);
   });
 
-  it("deducts 10 per warning", () => {
+  it("deducts 5 per warning (reduced — uncertain findings)", () => {
     const findings = [
       { rule: "test", severity: "warning" as const, file: "a.ts", message: "meh" },
     ];
-    assert.equal(computeScore(findings), 90);
+    assert.equal(computeScore(findings), 95);
   });
 
   it("does not deduct for info", () => {

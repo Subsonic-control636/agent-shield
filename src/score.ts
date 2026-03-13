@@ -3,10 +3,13 @@ import type { Finding } from "./types.js";
 /**
  * Compute a security score from 0-100.
  *
- * Starts at 100, deducts points per finding:
- *   critical: -25
- *   warning:  -10
- *   info:      -0
+ * Core principle: 宁可漏报，不要误报
+ * Only high-confidence findings (confirmed issues) heavily impact score.
+ *
+ * Scoring:
+ *   critical (confirmed):  -25
+ *   warning  (uncertain):   -5  (reduced from -10, since these need review)
+ *   info     (note/FP):     -0  (does not affect score)
  *
  * Minimum score is 0.
  */
@@ -18,7 +21,7 @@ export function computeScore(findings: Finding[]): number {
         score -= 25;
         break;
       case "warning":
-        score -= 10;
+        score -= 5;
         break;
     }
   }
