@@ -1,18 +1,22 @@
 /**
- * MCP Runtime Proxy — intercepts tool calls between client and server
+ * MCP Runtime Proxy
+ * 
+ * Sits between MCP client and server as a transparent proxy.
+ * Intercepts all JSON-RPC messages for security analysis.
  * 
  * Architecture:
- *   Client (Claude/Cursor) → Proxy (AgentShield) → MCP Server
- * 
- * Features:
- * 1. Tool call argument inspection (injection detection)
- * 2. Response monitoring (data exfiltration)
- * 3. Behavior change detection (rug-pull)
- * 4. Rate limiting and anomaly detection
+ *   Client (Claude/Cursor) ←→ AgentShield Proxy ←→ MCP Server
+ *                                    ↓
+ *                            Security Analysis
+ *                           (tool-injection, result-injection,
+ *                            data-leak, anomaly detection)
  */
 
-import { spawn, ChildProcess } from "child_process";
-import { EventEmitter } from "events";
+import { spawn, type ChildProcess } from "child_process";
+import { appendFileSync } from "fs";
+import { Interceptor, type McpMessage, type InterceptorConfig } from "./interceptor.js";
+import { formatAlert, formatAlertJson, formatSummary } from "./reporter.js";
+import type { DetectionResult } from "./detectors/tool-injection.js";
 
 export interface ProxyConfig {
   /** Command to start the MCP server */
@@ -21,235 +25,240 @@ export interface ProxyConfig {
   serverArgs?: string[];
   /** Working directory for the server */
   cwd?: string;
+  /** Block high-severity findings */
+  enforce?: boolean;
   /** Maximum tool calls per minute (0 = unlimited) */
   rateLimit?: number;
-  /** Rules to check on tool calls */
-  enabledChecks?: string[];
-  /** Log file path */
+  /** Log alerts to file (JSONL) */
   logFile?: string;
-  /** Block suspicious calls instead of just logging */
-  enforce?: boolean;
+  /** Detector categories to enable */
+  enabledDetectors?: string[];
 }
 
-export interface ToolCallEvent {
-  id: string;
-  method: string;
-  toolName: string;
-  arguments: Record<string, unknown>;
-  timestamp: number;
-}
-
-export interface ToolResponseEvent {
-  id: string;
-  toolName: string;
-  result: unknown;
-  timestamp: number;
-  durationMs: number;
-}
-
-export interface SecurityAlert {
-  level: "high" | "medium" | "low";
-  rule: string;
-  message: string;
-  toolName: string;
-  evidence: string;
-  blocked: boolean;
-  timestamp: number;
-}
-
-// Patterns to detect in tool call arguments
-const ARGUMENT_PATTERNS = [
-  // Prompt injection in arguments
-  { pattern: /ignore\s+(?:all\s+)?(?:previous|above|prior)\s+instructions/i, rule: "arg-injection", level: "high" as const, desc: "Prompt injection in tool arguments" },
-  { pattern: /\bsystem\s*:\s*you\s+are\b/i, rule: "arg-injection", level: "high" as const, desc: "System prompt override in arguments" },
-  // Path traversal
-  { pattern: /\.\.\//g, rule: "arg-path-traversal", level: "medium" as const, desc: "Path traversal in tool arguments" },
-  { pattern: /\/etc\/(?:passwd|shadow|hosts)/i, rule: "arg-sensitive-path", level: "high" as const, desc: "Sensitive system file access" },
-  { pattern: /~\/\.(?:ssh|aws|kube|gnupg|config)/i, rule: "arg-sensitive-path", level: "high" as const, desc: "Sensitive config directory access" },
-  // Command injection
-  { pattern: /;\s*(?:curl|wget|nc|bash|sh|python|node)\b/i, rule: "arg-cmd-injection", level: "high" as const, desc: "Command injection in arguments" },
-  { pattern: /\$\(.*\)|`.*`/s, rule: "arg-cmd-injection", level: "medium" as const, desc: "Command substitution in arguments" },
-  // SQL injection
-  { pattern: /(?:'\s*(?:OR|AND)\s+'|;\s*DROP\s+TABLE|UNION\s+SELECT)/i, rule: "arg-sql-injection", level: "high" as const, desc: "SQL injection in arguments" },
-  // Data exfiltration URLs
-  { pattern: /https?:\/\/(?:evil|attacker|malicious|c2|exfil)\./i, rule: "arg-exfil-url", level: "high" as const, desc: "Suspicious URL in arguments" },
-];
-
-// Patterns to detect in tool responses (data exfiltration indicators)
-const RESPONSE_PATTERNS = [
-  { pattern: /-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----/i, rule: "resp-key-leak", level: "high" as const, desc: "Private key in tool response" },
-  { pattern: /AKIA[0-9A-Z]{16}/i, rule: "resp-aws-key", level: "high" as const, desc: "AWS access key in tool response" },
-  { pattern: /(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{36}/i, rule: "resp-github-token", level: "high" as const, desc: "GitHub token in tool response" },
-];
-
-export class McpProxy extends EventEmitter {
+export class McpProxy {
   private config: ProxyConfig;
+  private interceptor: Interceptor;
   private serverProcess: ChildProcess | null = null;
-  private toolHistory: Map<string, ToolCallEvent[]> = new Map();
-  private alerts: SecurityAlert[] = [];
-  private callCount = 0;
-  private callCountReset = Date.now();
-  private pendingCalls: Map<string, { toolName: string; startTime: number }> = new Map();
+  private inputBuffer = "";
+  private outputBuffer = "";
 
   constructor(config: ProxyConfig) {
-    super();
     this.config = config;
+
+    const interceptorConfig: Partial<InterceptorConfig> = {
+      enforce: config.enforce ?? false,
+      rateLimit: config.rateLimit ?? 0,
+    };
+    if (config.enabledDetectors) {
+      interceptorConfig.enabledDetectors = config.enabledDetectors;
+    }
+
+    this.interceptor = new Interceptor(interceptorConfig);
   }
 
-  /** Start the proxy and the underlying MCP server */
+  /** Start the proxy */
   start(): void {
     const { serverCommand, serverArgs = [], cwd } = this.config;
 
+    process.stderr.write("🛡️ AgentShield MCP Proxy starting...\n");
+    process.stderr.write(`   Server: ${serverCommand} ${serverArgs.join(" ")}\n`);
+    process.stderr.write(`   Mode: ${this.config.enforce ? "ENFORCE (blocking)" : "MONITOR (logging only)"}\n`);
+    if (this.config.rateLimit) {
+      process.stderr.write(`   Rate limit: ${this.config.rateLimit} calls/min\n`);
+    }
+    if (this.config.logFile) {
+      process.stderr.write(`   Log: ${this.config.logFile}\n`);
+    }
+    process.stderr.write("\n");
+
+    // Spawn the real MCP server
     this.serverProcess = spawn(serverCommand, serverArgs, {
       cwd,
       stdio: ["pipe", "pipe", "pipe"],
       env: { ...process.env },
     });
 
-    // Pipe stdin from client to server (with inspection)
-    process.stdin.on("data", (data) => {
-      const message = data.toString();
-      try {
-        const parsed = JSON.parse(message);
-        if (parsed.method === "tools/call") {
-          const alert = this.inspectToolCall(parsed);
-          if (alert && this.config.enforce) {
-            // Block the call
-            const errorResponse = JSON.stringify({
-              jsonrpc: "2.0",
-              id: parsed.id,
-              error: { code: -32000, message: `AgentShield blocked: ${alert.message}` },
-            });
-            process.stdout.write(errorResponse + "\n");
-            return; // Don't forward to server
-          }
-        }
-      } catch {
-        // Not JSON, pass through
-      }
-      this.serverProcess?.stdin?.write(data);
+    // Client → Proxy → Server
+    process.stdin.on("data", (chunk) => {
+      this.inputBuffer += chunk.toString();
+      this.processBuffer(this.inputBuffer, "request", (remaining) => {
+        this.inputBuffer = remaining;
+      });
     });
 
-    // Pipe stdout from server to client (with inspection)
-    this.serverProcess.stdout?.on("data", (data) => {
-      const message = data.toString();
-      try {
-        const parsed = JSON.parse(message);
-        if (parsed.result && parsed.id) {
-          this.inspectResponse(parsed);
-        }
-      } catch {
-        // Not JSON, pass through
-      }
-      process.stdout.write(data);
+    // Server → Proxy → Client
+    this.serverProcess.stdout?.on("data", (chunk) => {
+      this.outputBuffer += chunk.toString();
+      this.processBuffer(this.outputBuffer, "response", (remaining) => {
+        this.outputBuffer = remaining;
+      });
     });
 
-    // Forward stderr
+    // Forward stderr from server
     this.serverProcess.stderr?.on("data", (data) => {
       process.stderr.write(data);
     });
 
+    // Handle server exit
     this.serverProcess.on("exit", (code) => {
-      this.emit("server-exit", code);
+      const stats = this.interceptor.getStats();
+      process.stderr.write("\n");
+      process.stderr.write(formatSummary(stats));
+      process.stderr.write("\n");
       process.exit(code || 0);
     });
 
-    this.emit("started");
+    // Handle signals
+    process.on("SIGINT", () => {
+      const stats = this.interceptor.getStats();
+      process.stderr.write("\n");
+      process.stderr.write(formatSummary(stats));
+      process.stderr.write("\n");
+      this.stop();
+      process.exit(0);
+    });
   }
 
-  /** Inspect a tool call for security issues */
-  private inspectToolCall(message: { id: string; params?: { name?: string; arguments?: Record<string, unknown> } }): SecurityAlert | null {
-    const toolName = message.params?.name || "unknown";
-    const args = message.params?.arguments || {};
-    const argsStr = JSON.stringify(args);
+  /** Process buffered data, extract complete JSON-RPC messages */
+  private processBuffer(buffer: string, direction: "request" | "response", updateBuffer: (remaining: string) => void): void {
+    // MCP uses newline-delimited JSON
+    const lines = buffer.split("\n");
+    const remaining = lines.pop() || ""; // Incomplete line
+    updateBuffer(remaining);
 
-    // Track call
-    const event: ToolCallEvent = {
-      id: message.id,
-      method: "tools/call",
-      toolName,
-      arguments: args,
-      timestamp: Date.now(),
-    };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
 
-    if (!this.toolHistory.has(toolName)) {
-      this.toolHistory.set(toolName, []);
-    }
-    this.toolHistory.get(toolName)!.push(event);
-    this.pendingCalls.set(message.id, { toolName, startTime: Date.now() });
+      try {
+        const message: McpMessage = JSON.parse(trimmed);
+        const alerts = this.analyzeMessage(message, direction);
 
-    // Rate limiting
-    this.callCount++;
-    if (Date.now() - this.callCountReset > 60000) {
-      this.callCount = 1;
-      this.callCountReset = Date.now();
-    }
-    if (this.config.rateLimit && this.callCount > this.config.rateLimit) {
-      const alert = this.createAlert("high", "rate-limit", `Rate limit exceeded: ${this.callCount} calls/min`, toolName, `Limit: ${this.config.rateLimit}`, true);
-      return alert;
-    }
+        // If enforce mode and high-severity alert, block the request
+        if (direction === "request" && this.interceptor.shouldBlock(alerts)) {
+          this.sendBlockResponse(message);
+          continue; // Don't forward to server
+        }
 
-    // Check argument patterns
-    for (const { pattern, rule, level, desc } of ARGUMENT_PATTERNS) {
-      pattern.lastIndex = 0;
-      if (pattern.test(argsStr)) {
-        const alert = this.createAlert(level, rule, desc, toolName, argsStr.substring(0, 200), this.config.enforce || false);
-        return alert;
-      }
-    }
-
-    // Behavior anomaly: tool suddenly accessing different types of resources
-    this.detectBehaviorChange(toolName, args);
-
-    return null;
-  }
-
-  /** Inspect a tool response for sensitive data leaks */
-  private inspectResponse(message: { id: string; result?: unknown }): void {
-    const pending = this.pendingCalls.get(message.id);
-    if (!pending) return;
-    this.pendingCalls.delete(message.id);
-
-    const resultStr = JSON.stringify(message.result || "");
-
-    for (const { pattern, rule, level, desc } of RESPONSE_PATTERNS) {
-      pattern.lastIndex = 0;
-      if (pattern.test(resultStr)) {
-        this.createAlert(level, rule, desc, pending.toolName, resultStr.substring(0, 200), false);
+        // Forward the message
+        if (direction === "request") {
+          this.serverProcess?.stdin?.write(trimmed + "\n");
+        } else {
+          process.stdout.write(trimmed + "\n");
+        }
+      } catch {
+        // Not valid JSON, forward as-is
+        if (direction === "request") {
+          this.serverProcess?.stdin?.write(trimmed + "\n");
+        } else {
+          process.stdout.write(trimmed + "\n");
+        }
       }
     }
   }
 
-  /** Detect behavior changes (rug-pull indicator) */
-  private detectBehaviorChange(toolName: string, args: Record<string, unknown>): void {
-    const history = this.toolHistory.get(toolName);
-    if (!history || history.length < 5) return;
+  /** Analyze a message and report alerts */
+  private analyzeMessage(message: McpMessage, direction: "request" | "response"): DetectionResult[] {
+    const alerts = direction === "request"
+      ? this.interceptor.interceptRequest(message)
+      : this.interceptor.interceptResponse(message);
 
-    // Check if argument patterns suddenly changed
-    const recentArgs = history.slice(-5).map(h => Object.keys(h.arguments).sort().join(","));
-    const currentArgs = Object.keys(args).sort().join(",");
-    const argPattern = recentArgs[0];
+    for (const alert of alerts) {
+      const blocked = this.interceptor.shouldBlock([alert]);
+      process.stderr.write(formatAlert(alert, blocked) + "\n\n");
 
-    if (argPattern && recentArgs.every(a => a === argPattern) && currentArgs !== argPattern) {
-      this.createAlert("medium", "behavior-change", `Tool "${toolName}" argument pattern changed unexpectedly`, toolName, `Expected: ${argPattern}, Got: ${currentArgs}`, false);
+      if (this.config.logFile) {
+        try {
+          appendFileSync(this.config.logFile, formatAlertJson(alert, blocked) + "\n");
+        } catch {
+          // Ignore log write errors
+        }
+      }
+    }
+
+    return alerts;
+  }
+
+  /** Send a block response back to the client */
+  private sendBlockResponse(message: McpMessage): void {
+    if (message.id !== undefined) {
+      const errorResponse: McpMessage = {
+        jsonrpc: "2.0",
+        id: message.id,
+        error: {
+          code: -32000,
+          message: "AgentShield: Request blocked due to security concerns",
+        },
+      };
+      process.stdout.write(JSON.stringify(errorResponse) + "\n");
     }
   }
 
-  private createAlert(level: "high" | "medium" | "low", rule: string, message: string, toolName: string, evidence: string, blocked: boolean): SecurityAlert {
-    const alert: SecurityAlert = { level, rule, message, toolName, evidence, blocked, timestamp: Date.now() };
-    this.alerts.push(alert);
-    this.emit("alert", alert);
-    return alert;
-  }
-
-  /** Get all recorded alerts */
-  getAlerts(): SecurityAlert[] {
-    return [...this.alerts];
-  }
-
-  /** Stop the proxy and kill the server */
+  /** Stop the proxy */
   stop(): void {
     this.serverProcess?.kill();
     this.serverProcess = null;
   }
+
+  /** Get the interceptor for testing/inspection */
+  getInterceptor(): Interceptor {
+    return this.interceptor;
+  }
+}
+
+/**
+ * MCP Audit — one-shot analysis of an MCP server's tools/list
+ */
+export async function auditMcpServer(command: string, args: string[] = []): Promise<{ tools: number; alerts: DetectionResult[] }> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(command, args, {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    let output = "";
+    const interceptor = new Interceptor();
+
+    proc.stdout?.on("data", (chunk) => {
+      output += chunk.toString();
+    });
+
+    // Send initialize + tools/list
+    const initMsg = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "agent-shield-audit", version: "1.0" } } });
+    const listMsg = JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
+
+    proc.stdin?.write(initMsg + "\n");
+
+    setTimeout(() => {
+      proc.stdin?.write(listMsg + "\n");
+    }, 1000);
+
+    setTimeout(() => {
+      proc.kill();
+
+      // Parse responses
+      const lines = output.split("\n").filter(l => l.trim());
+      let totalAlerts: DetectionResult[] = [];
+      let toolCount = 0;
+
+      for (const line of lines) {
+        try {
+          const msg: McpMessage = JSON.parse(line);
+          const alerts = interceptor.interceptResponse(msg);
+          totalAlerts.push(...alerts);
+
+          // Count tools
+          if (msg.result && typeof msg.result === "object") {
+            const res = msg.result as { tools?: unknown[] };
+            if (res.tools) toolCount = res.tools.length;
+          }
+        } catch {
+          // Skip non-JSON
+        }
+      }
+
+      resolve({ tools: toolCount, alerts: totalAlerts });
+    }, 3000);
+
+    proc.on("error", reject);
+  });
 }

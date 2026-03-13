@@ -422,9 +422,9 @@ program
   .description("Run as a security proxy between MCP client and server")
   .argument("<command>", "MCP server command to proxy")
   .argument("[args...]", "Arguments for the server command")
-  .option("--enforce", "Block suspicious tool calls (default: monitor only)")
+  .option("--enforce", "Block high-risk tool calls (default: monitor only)")
   .option("--rate-limit <n>", "Max tool calls per minute", parseInt)
-  .option("--log <file>", "Write alerts to log file")
+  .option("--log <file>", "Write alerts to JSONL file")
   .action(async (command: string, args: string[], options: { enforce?: boolean; rateLimit?: number; log?: string }) => {
     const { McpProxy } = await import("./runtime/proxy.js");
 
@@ -436,27 +436,56 @@ program
       logFile: options.log,
     });
 
-    proxy.on("alert", (alert: { level: string; rule: string; message: string; toolName: string; blocked: boolean }) => {
-      const icon = alert.level === "high" ? "🔴" : alert.level === "medium" ? "🟡" : "🟢";
-      const action = alert.blocked ? " [BLOCKED]" : "";
-      process.stderr.write(`${icon} [${alert.rule}] ${alert.message} (tool: ${alert.toolName})${action}\n`);
-
-      if (options.log) {
-        const { appendFileSync } = require("fs");
-        appendFileSync(options.log, JSON.stringify(alert) + "\n");
-      }
-    });
-
-    proxy.on("started", () => {
-      process.stderr.write("🛡️ AgentShield MCP Proxy started\n");
-    });
-
     proxy.start();
+  });
+
+// MCP server audit
+program
+  .command("mcp-audit")
+  .description("Audit an MCP server's registered tools for security issues")
+  .argument("<command>", "MCP server command to audit")
+  .argument("[args...]", "Arguments for the server command")
+  .action(async (command: string, args: string[]) => {
+    const { auditMcpServer } = await import("./runtime/proxy.js");
+
+    console.log(`🛡️ Auditing MCP server: ${command} ${args.join(" ")}`);
+    console.log();
+
+    try {
+      const { tools, alerts } = await auditMcpServer(command, args);
+      console.log(`📋 Tools registered: ${tools}`);
+      console.log(`🔍 Security alerts: ${alerts.length}`);
+      console.log();
+
+      if (alerts.length === 0) {
+        console.log("✅ No security issues found in tool registrations.");
+      } else {
+        const high = alerts.filter(a => a.level === "high");
+        const medium = alerts.filter(a => a.level === "medium");
+        const low = alerts.filter(a => a.level === "low");
+
+        if (high.length > 0) console.log(`🔴 High: ${high.length}`);
+        if (medium.length > 0) console.log(`🟡 Medium: ${medium.length}`);
+        if (low.length > 0) console.log(`🟢 Low: ${low.length}`);
+        console.log();
+
+        for (const alert of [...high, ...medium, ...low]) {
+          const icon = alert.level === "high" ? "🔴" : alert.level === "medium" ? "🟡" : "🟢";
+          console.log(`${icon} [${alert.rule}] ${alert.message}`);
+          console.log(`   Tool: ${alert.toolName}`);
+          console.log(`   ${alert.evidence.substring(0, 120)}`);
+          console.log();
+        }
+      }
+    } catch (e: any) {
+      console.error(`❌ Audit failed: ${e.message}`);
+      process.exit(1);
+    }
   });
 
 // Default: if first arg looks like a directory, treat as scan
 const args = process.argv.slice(2);
-if (args.length > 0 && !args[0]!.startsWith("-") && !["scan", "init", "watch", "compare", "badge", "discover", "install-check", "proxy", "help"].includes(args[0]!)) {
+if (args.length > 0 && !args[0]!.startsWith("-") && !["scan", "init", "watch", "compare", "badge", "discover", "install-check", "proxy", "mcp-audit", "help"].includes(args[0]!)) {
   process.argv.splice(2, 0, "scan");
 }
 
