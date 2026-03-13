@@ -10,6 +10,7 @@ import { printJsonReport } from "./reporter/json.js";
 import { generateBadgeSvg, generateBadgeMarkdown } from "./reporter/badge.js";
 import { discoverAgents, printDiscovery } from "./discover.js";
 import { getLlmConfigFromEnv, resolveAiConfig, runLlmAnalysis } from "./llm-analyzer.js";
+import { toSarif } from "./reporter/sarif.js";
 import { DEFAULT_CONFIG, DEFAULT_IGNORE } from "./config.js";
 
 const program = new Command();
@@ -28,9 +29,11 @@ program
   .option("--disable <rules>", "Comma-separated rules to disable")
   .option("--enable <rules>", "Comma-separated rules to enable (only these)")
   .option("--ai", "Enable AI-powered deep analysis (requires API key)")
+  .option("--sarif", "Output results in SARIF format (GitHub Code Scanning compatible)")
+  .option("--output <file>", "Write output to file instead of stdout")
   .option("--provider <provider>", "AI provider: openai | anthropic | ollama (default: auto-detect)")
   .option("--model <model>", "AI model to use (e.g. gpt-4o, claude-sonnet-4-20250514, llama3)")
-  .action(async (directory: string, options: { json?: boolean; failUnder?: number; disable?: string; enable?: string; ai?: boolean; provider?: string; model?: string }) => {
+  .action(async (directory: string, options: { json?: boolean; sarif?: boolean; output?: string; failUnder?: number; disable?: string; enable?: string; ai?: boolean; provider?: string; model?: string }) => {
     const target = resolve(directory);
     let scanTarget = target;
     let tempDir: string | null = null;
@@ -79,7 +82,13 @@ program
     }
 
     if (options.json) {
-      printJsonReport(result);
+      const out = JSON.stringify(result, null, 2);
+      if (options.output) { writeFileSync(options.output, out); console.error(`📄 Written to ${options.output}`); }
+      else printJsonReport(result);
+    } else if (options.sarif) {
+      const out = toSarif(result);
+      if (options.output) { writeFileSync(options.output, out); console.error(`📄 SARIF written to ${options.output}`); }
+      else console.log(out);
     } else {
       printReport(result);
     }
