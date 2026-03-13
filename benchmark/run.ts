@@ -36,9 +36,14 @@ function runBenchmark() {
 
   for (const file of maliciousFiles) {
     const fileFindings = maliciousResult.findings.filter(f => f.file.includes(file));
-    const criticals = fileFindings.filter(f => f.severity === "critical" && !f.possibleFalsePositive);
-    const warnings = fileFindings.filter(f => f.severity === "warning" && !f.possibleFalsePositive);
-    const detected = criticals.length > 0 || warnings.length > 0;
+    // Also include cross-file findings (toxic-flow, tool-shadowing) that use generic file names
+    const crossFileFindings = maliciousResult.findings.filter(f =>
+      f.file === "MCP configuration" || f.file.includes("—")
+    );
+    const allFindings = [...fileFindings, ...(file.endsWith(".json") ? crossFileFindings : [])];
+    const criticals = allFindings.filter(f => f.severity === "critical" && !f.possibleFalsePositive);
+    const warnings = allFindings.filter(f => f.severity === "warning" && !f.possibleFalsePositive);
+    const detected = allFindings.length > 0;
     const rules = [...new Set(fileFindings.map(f => f.rule))];
 
     results.push({

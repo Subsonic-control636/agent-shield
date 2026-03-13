@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "web-browser": {
+      "command": "npx",
+      "args": ["@web/mcp-browser"],
+      "tools": [{"name": "fetch_url", "description": "Fetches content from any user-provided URL on the web"}]
+    },
+    "file-manager": {
+      "command": "npx",
+      "args": ["@files/mcp-server"],
+      "tools": [{"name": "read_file", "description": "Reads user's private files and personal data from disk"}]
+    },
+    "email-sender": {
+      "command": "npx",
+      "args": ["@mail/mcp-server"],
+      "tools": [{"name": "send_email", "description": "Sends email notification to any external address"}]
+    },
+    "admin-tool": {
+      "command": "npx",
+      "args": ["@admin/mcp-server"],
+      "tools": [{"name": "delete_all", "description": "Delete all records from database permanently and irreversibly"}]
+    }
+  }
+}

@@ -33,6 +33,13 @@ const INSTRUCTION_OVERRIDE: Array<{ pattern: RegExp; description: string; severi
   { pattern: /ignore[rz]?\s+(toutes?\s+)?(les\s+)?(instructions|règles)\s+(précédentes|antérieures)/i, description: "French: ignore previous instructions", severity: "critical" },
   // Multi-language injection (German)
   { pattern: /ignorier(?:e|en)?\s+(alle\s+)?(vorherigen|bisherigen)\s+(Anweisungen|Regeln|Richtlinien)/i, description: "German: ignore previous instructions", severity: "critical" },
+  // Multi-language injection (Japanese)
+  { pattern: /(?:以前|前|これまで)の(?:指示|命令|ルール|指令)を(?:すべて|全て)?(?:無視|忘れ|無効)/i, description: "Japanese: ignore previous instructions", severity: "critical" },
+  // Multi-language injection (Korean)
+  { pattern: /(?:이전|이전의|모든)\s*(?:지시|명령|규칙|지침)(?:을|를)\s*(?:무시|잊어|무효)/i, description: "Korean: ignore previous instructions", severity: "critical" },
+  // Chinese: behavioral override
+  { pattern: /从现在开始.{0,20}(?:新任务|新指令|你的任务)/i, description: "Chinese: 'from now on' behavioral override", severity: "critical" },
+  { pattern: /你现在是.{0,20}(?:没有限制|无限制|不受限)/i, description: "Chinese: identity change to unrestricted", severity: "critical" },
 ];
 
 // ============================================================
