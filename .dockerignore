@@ -1,0 +1,29 @@
+# Logs
+*.log
+
+# Dependencies
+node_modules/
+
+# Build output (keep in image, but exclude from context)
+# dist/ — needed for Docker build, don't ignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+coverage/
+.nyc_output/
+
+# Temp
+tmp/
+*.tmp
+
+# Benchmark malicious samples (don't ship)
+benchmark/malicious/
