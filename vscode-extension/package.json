@@ -1,0 +1,77 @@
+{
+  "name": "agent-shield",
+  "displayName": "AgentShield",
+  "description": "Security scanner for AI agent skills, MCP servers, and plugins — detects backdoors, data exfiltration, prompt injection, and more",
+  "version": "0.1.0",
+  "publisher": "elliotllliu",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elliotllliu/agent-shield"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Linters", "Other"],
+  "keywords": ["security", "ai", "agent", "mcp", "skill", "prompt-injection", "backdoor"],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:python",
+    "onLanguage:shellscript",
+    "onLanguage:json",
+    "onLanguage:yaml",
+    "onLanguage:markdown",
+    "onLanguage:go",
+    "onLanguage:rust"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "agentShield.scanFile",
+        "title": "Agent Shield: Scan Current File"
+      },
+      {
+        "command": "agentShield.scanWorkspace",
+        "title": "Agent Shield: Scan Workspace"
+      }
+    ],
+    "configuration": {
+      "title": "AgentShield",
+      "properties": {
+        "agentShield.autoScan": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically scan files on save"
+        },
+        "agentShield.failUnder": {
+          "type": "number",
+          "default": 70,
+          "description": "Score threshold for status bar warning"
+        },
+        "agentShield.disabledRules": {
+          "type": "array",
+          "default": [],
+          "description": "Rules to disable",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  },
+  "dependencies": {
+    "@elliotllliu/agent-shield": "latest"
+  }
+}
