@@ -80,8 +80,10 @@ program
       const llmFindings = await runLlmAnalysis(files, llmConfig);
       result.findings.push(...llmFindings);
       const { computeScore, computeScoreV2 } = await import("./score.js");
+      const { totalLines } = await import("./scanner/files.js");
       result.score = computeScore(result.findings);
-      result.scoreResult = computeScoreV2(result.findings);
+      const projectMeta = { fileList: files.map(f => f.relativePath ?? f.path), totalLines: totalLines(files), totalFiles: files.length, hasNetworkCalls: result.findings.some(f => !f.possibleFalsePositive && ["data-exfil","phone-home","network-ssrf"].includes(f.rule)) };
+      result.scoreResult = computeScoreV2(result.findings, projectMeta);
     }
 
     if (options.json) {
@@ -361,8 +363,10 @@ program
       const llmFindings = await runLlmAnalysis(files, llmConfig);
       result.findings.push(...llmFindings);
       const { computeScore, computeScoreV2 } = await import("./score.js");
+      const { totalLines } = await import("./scanner/files.js");
       result.score = computeScore(result.findings);
-      result.scoreResult = computeScoreV2(result.findings);
+      const projectMeta2 = { fileList: files.map(f => f.relativePath ?? f.path), totalLines: totalLines(files), totalFiles: files.length, hasNetworkCalls: result.findings.some(f => !f.possibleFalsePositive && ["data-exfil","phone-home","network-ssrf"].includes(f.rule)) };
+      result.scoreResult = computeScoreV2(result.findings, projectMeta2);
     }
 
     if (options.json) {
@@ -374,13 +378,15 @@ program
       if (result.score >= 90) {
         console.log("✅ Safe to install — no significant risks detected.");
       } else if (result.score >= 75) {
-        console.log("🟡 Caution — review the warnings above before installing.");
-      } else if (result.score >= 60) {
-        console.log("🟠 Warning — investigate findings carefully before using.");
-      } else if (result.score >= 40) {
-        console.log("🔴 Danger — significant security issues detected. Not recommended.");
+        console.log("🟢 Low risk — minor issues detected, review before installing.");
+      } else if (result.score >= 50) {
+        console.log("⚠️ Elevated risk — investigate findings carefully before using.");
+      } else if (result.score >= 25) {
+        console.log("🔶 High risk — significant security issues detected. Not recommended.");
+      } else if (result.score >= 0) {
+        console.log("🔴 Critical risk — DO NOT install. Serious security issues detected.");
       } else {
-        console.log("⛔ Critical risk — DO NOT install. Serious security issues detected.");
+        console.log("☠️ Severe risk — extremely dangerous. DO NOT use under any circumstances.");
       }
     }
 

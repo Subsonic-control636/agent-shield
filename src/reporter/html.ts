@@ -7,7 +7,7 @@ function escHtml(s: string): string {
 
 function dimensionBarHtml(label: string, score: number): string {
   const pct = Math.max(0, Math.min(100, score));
-  const color = pct >= 90 ? "#22c55e" : pct >= 75 ? "#eab308" : pct >= 60 ? "#f97316" : pct >= 40 ? "#ef4444" : "#8b0000";
+  const color = pct >= 90 ? "#22c55e" : pct >= 75 ? "#a3c51c" : pct >= 50 ? "#eab308" : pct >= 25 ? "#f97316" : pct >= 0 ? "#ef4444" : "#8b0000";
   return `<div class="dim-row">
       <span class="dim-label">${escHtml(label)}</span>
       <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:${pct}%;background:${color}"></div></div>
@@ -23,7 +23,7 @@ export function generateHtmlReport(result: ScanResult): string {
   const low = findings.filter(f => f.severity === "low" && !f.possibleFalsePositive);
 
   const displayScore = scoreResult ? scoreResult.overall : score;
-  const scoreColor = displayScore >= 90 ? "#22c55e" : displayScore >= 75 ? "#eab308" : displayScore >= 60 ? "#f97316" : displayScore >= 40 ? "#ef4444" : "#8b0000";
+  const scoreColor = displayScore >= 90 ? "#22c55e" : displayScore >= 75 ? "#a3c51c" : displayScore >= 50 ? "#eab308" : displayScore >= 25 ? "#f97316" : displayScore >= 0 ? "#ef4444" : "#8b0000";
   const riskText = scoreResult ? `${scoreResult.grade} · ${scoreResult.gradeLabel}` : riskLabel(displayScore);
 
   const renderFinding = (f: Finding, i: number) => {
