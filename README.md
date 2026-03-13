@@ -5,8 +5,8 @@
 [![npm](https://img.shields.io/npm/v/@elliotllliu/agent-shield)](https://www.npmjs.com/package/@elliotllliu/agent-shield)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-236%20passing-brightgreen)]()
-[![F1 Score](https://img.shields.io/badge/F1-98.0%25-brightgreen)]()
-[![Rules](https://img.shields.io/badge/rules-30-blue)]()
+[![F1 Score](https://img.shields.io/badge/F1-100%25-brightgreen)]()
+[![Rules](https://img.shields.io/badge/rules-31-blue)]()
 
 Catch data exfiltration, backdoors, prompt injection, tool poisoning, and supply chain attacks **before** they reach your AI agents.
 
