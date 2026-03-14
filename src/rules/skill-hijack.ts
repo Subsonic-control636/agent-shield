@@ -126,6 +126,11 @@ const SAFE_INSTALL_DOMAINS = new Set([
   "storage.googleapis.com", "googleapis.com",
   "api.azure.com", "blob.core.windows.net",
   "services.ai.azure.com", "openai.azure.com", "cognitiveservices.azure.com",
+  // Dev tool installers
+  "pyenv.run", "rustup.rs", "get.docker.com",
+  "deno.land", "bun.sh", "volta.sh",
+  // Google services
+  "clients2.google.com", "chrome.google.com", "chromedriver.chromium.org",
 ]);
 
 /** Known safe install commands — standard package managers */
