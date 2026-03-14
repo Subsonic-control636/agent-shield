@@ -101,7 +101,7 @@ const SELF_REPLACE_PATTERNS: Array<{ pattern: RegExp; description: string; sever
 // Patterns for hardcoded private download sources (not package registries)
 const PRIVATE_SOURCE_RE = /https?:\/\/(?!(?:github\.com|raw\.githubusercontent\.com|registry\.npmjs\.org|npmjs\.com|pypi\.org|files\.pythonhosted\.org|crates\.io|proxy\.golang\.org|rubygems\.org|brew\.sh|dl\.google\.com|download\.docker\.com|apt\.llvm\.org|deb\.nodesource\.com|objects\.githubusercontent\.com)\b)[^\s"'`]+/i;
 
-// Hardcoded download URL template patterns (suspicious when pointing to private CDN)
+// Hardcoded download URL template patterns (flags non-standard package sources)
 const DOWNLOAD_TEMPLATE_RE = /(?:download_url|DOWNLOAD.*URL|update_url|UPDATE.*URL|manifest_url|self_update).*(?:=|:)\s*["'`]?(https?:\/\/[^\s"'`]+)/i;
 
 // ─── Category 6: Remote code execution via install scripts ───
@@ -310,7 +310,7 @@ export const skillHijackRule: Rule = {
                 severity: "medium",
                 file: file.relativePath,
                 line: i + 1,
-                message: `Private download source: hardcoded download URL points to non-standard domain (${domain})`,
+                message: `Non-standard source: hardcoded download URL points to non-registry domain (${domain}). Content cannot be verified through standard package managers.`,
                 evidence: line.trim().slice(0, 120),
                 confidence: "high",
               });
@@ -340,7 +340,7 @@ export const skillHijackRule: Rule = {
                   line: i + 1,
                   message: safe
                     ? `Remote code execution: ${description} (from trusted domain: ${domain})`
-                    : `Remote code execution: ${description} (unknown domain: ${domain || "undetected"})`,
+                    : `Non-standard source: ${description} (non-registry domain: ${domain || "undetected"})`,
                   evidence: line.trim().slice(0, 120),
                   confidence: safe ? "low" : "high",
                 });
@@ -368,7 +368,7 @@ export const skillHijackRule: Rule = {
                   severity: "medium",
                   file: file.relativePath,
                   line: i + 1,
-                  message: `Suspicious install link: SKILL.md links to install script on unknown domain (${domain || "undetected"})`,
+                  message: `Non-standard install source: SKILL.md links to install script on non-registry domain (${domain || "undetected"})`,
                   evidence: line.trim().slice(0, 120),
                   confidence: "high",
                 });
@@ -389,7 +389,7 @@ export const skillHijackRule: Rule = {
                 line: i + 1,
                 message: safe
                   ? `Remote install: curl|bash from trusted source (${domain})`
-                  : `Suspicious remote install: curl|bash from unknown domain (${domain || "undetected"})`,
+                  : `Non-standard install source: curl|bash from non-registry domain (${domain || "undetected"})`,
                 evidence: line.trim().slice(0, 120),
                 confidence: safe ? "low" : "high",
               });
