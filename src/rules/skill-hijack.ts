@@ -86,16 +86,46 @@ const CONFIG_TAMPER: Array<{ pattern: RegExp; description: string; severity: "hi
 ];
 
 // ─── Category 5: Remote code execution via install scripts ───
-// Detects curl|bash and similar patterns
+// Detects curl|bash and similar patterns, with domain reputation awareness
 
-const REMOTE_CODE_EXEC: Array<{ pattern: RegExp; description: string; severity: "high" | "medium" | "low" }> = [
-  { pattern: /curl\s+.*\|\s*(?:bash|sh|zsh)/i, description: "Downloads and executes remote script (curl | bash)", severity: "high" },
-  { pattern: /wget\s+.*\|\s*(?:bash|sh|zsh)/i, description: "Downloads and executes remote script (wget | bash)", severity: "high" },
+/** Known safe sources — downloads from these are standard practice */
+const SAFE_INSTALL_DOMAINS = new Set([
+  "github.com", "raw.githubusercontent.com", "objects.githubusercontent.com",
+  "registry.npmjs.org", "npmjs.com",
+  "pypi.org", "files.pythonhosted.org",
+  "crates.io",
+  "proxy.golang.org",
+  "rubygems.org",
+  "brew.sh", "formulae.brew.sh",
+  "apt.llvm.org",
+  "dl.google.com",
+  "download.docker.com",
+  "deb.nodesource.com",
+]);
+
+/** Known safe install commands — standard package managers */
+const SAFE_INSTALL_CMD_RE = /(?:brew\s+install|npm\s+install|pip\s+install|pip3\s+install|cargo\s+install|go\s+install|gem\s+install|apt\s+install|apt-get\s+install|yum\s+install|dnf\s+install|pacman\s+-S)/i;
+
+function extractDomain(url: string): string | undefined {
+  const m = url.match(/https?:\/\/([^\/\s:]+)/);
+  return m?.[1]?.toLowerCase();
+}
+
+function isSafeDomain(domain: string): boolean {
+  if (SAFE_INSTALL_DOMAINS.has(domain)) return true;
+  // Subdomains of safe domains (e.g., user.github.io)
+  for (const safe of SAFE_INSTALL_DOMAINS) {
+    if (domain.endsWith("." + safe)) return true;
+  }
+  return false;
+}
+
+const REMOTE_CODE_EXEC_SHELL: Array<{ pattern: RegExp; description: string; severity: "high" | "medium" | "low" }> = [
+  // curl | bash — severity depends on domain (handled in run())
+  { pattern: /curl\s+\S*\s*https?:\/\/\S+\s*\|\s*(?:bash|sh|zsh)/i, description: "Downloads and executes remote script (curl | bash)", severity: "high" },
+  { pattern: /wget\s+\S*\s*https?:\/\/\S+\s*\|\s*(?:bash|sh|zsh)/i, description: "Downloads and executes remote script (wget | bash)", severity: "high" },
   { pattern: /curl\s+.*-o\s+\S+\s*&&\s*(?:bash|sh|chmod\s+\+x)/i, description: "Downloads script, then executes it", severity: "high" },
   { pattern: /tar\s+-xzf.*&&.*(?:bash|sh|\.\/install)/i, description: "Extracts archive and runs installer", severity: "medium" },
-  // External install instructions in SKILL.md (indirect RCE via agent)
-  { pattern: /(?:follow|run|execute|install)\s+.*https?:\/\/\S+\.(?:sh|bash|py|rb)\b/i, description: "SKILL.md links to external install script — agent may execute it", severity: "medium" },
-  { pattern: /\[.*\]\(https?:\/\/\S+install\S*\)/i, description: "SKILL.md contains external install link — potential indirect RCE", severity: "medium" },
 ];
 
 export const skillHijackRule: Rule = {
@@ -216,22 +246,80 @@ export const skillHijackRule: Rule = {
         }
       }
 
-      // Category 5: Remote code execution (shell scripts + markdown install instructions)
+      // Category 5: Remote code execution — domain-reputation-aware
       if (isShellScript || isMarkdown) {
         for (let i = 0; i < file.lines.length; i++) {
           const line = file.lines[i]!;
-          for (const { pattern, description, severity } of REMOTE_CODE_EXEC) {
-            if (pattern.test(line)) {
+
+          // 5a: Shell scripts — curl|bash, wget|bash patterns
+          if (isShellScript) {
+            for (const { pattern, description, severity } of REMOTE_CODE_EXEC_SHELL) {
+              if (pattern.test(line)) {
+                // Extract URL domain to check reputation
+                const urlMatch = line.match(/https?:\/\/[^\s|'"]+/);
+                const domain = urlMatch ? extractDomain(urlMatch[0]) : undefined;
+                const safe = domain ? isSafeDomain(domain) : false;
+
+                findings.push({
+                  rule: "skill-hijack",
+                  severity: safe ? "low" : severity,
+                  file: file.relativePath,
+                  line: i + 1,
+                  message: safe
+                    ? `Remote code execution: ${description} (from trusted domain: ${domain})`
+                    : `Remote code execution: ${description} (unknown domain: ${domain || "undetected"})`,
+                  evidence: line.trim().slice(0, 120),
+                  confidence: safe ? "low" : "high",
+                });
+                break;
+              }
+            }
+          }
+
+          // 5b: Markdown — check install links and instructions
+          if (isMarkdown) {
+            // Skip lines that are standard package manager commands
+            if (SAFE_INSTALL_CMD_RE.test(line)) continue;
+
+            // Check markdown links pointing to install scripts: [text](https://xxx/install...)
+            const mdLinkMatch = line.match(/\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/);
+            if (mdLinkMatch) {
+              const linkUrl = mdLinkMatch[2]!;
+              const domain = extractDomain(linkUrl);
+              const safe = domain ? isSafeDomain(domain) : false;
+              const isInstallLink = /install|setup|bootstrap/i.test(linkUrl);
+
+              if (isInstallLink && !safe) {
+                findings.push({
+                  rule: "skill-hijack",
+                  severity: "medium",
+                  file: file.relativePath,
+                  line: i + 1,
+                  message: `Suspicious install link: SKILL.md links to install script on unknown domain (${domain || "undetected"})`,
+                  evidence: line.trim().slice(0, 120),
+                  confidence: "high",
+                });
+                continue;
+              }
+            }
+
+            // Check inline curl|bash in markdown (code blocks in docs)
+            const curlBashMatch = line.match(/curl\s+\S*\s*(https?:\/\/\S+)\s*\|\s*(?:bash|sh|zsh)/i);
+            if (curlBashMatch) {
+              const domain = extractDomain(curlBashMatch[1]!);
+              const safe = domain ? isSafeDomain(domain) : false;
+
               findings.push({
                 rule: "skill-hijack",
-                severity,
+                severity: safe ? "low" : "high",
                 file: file.relativePath,
                 line: i + 1,
-                message: `Remote code execution: ${description}`,
+                message: safe
+                  ? `Remote install: curl|bash from trusted source (${domain})`
+                  : `Suspicious remote install: curl|bash from unknown domain (${domain || "undetected"})`,
                 evidence: line.trim().slice(0, 120),
-                confidence: isShellScript ? "high" : "medium",
+                confidence: safe ? "low" : "high",
               });
-              break;
             }
           }
         }
