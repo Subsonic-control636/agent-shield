@@ -16,8 +16,10 @@ export function loadConfig(dir: string): AgentShieldConfig {
       try {
         const content = readFileSync(configPath, "utf-8");
         return parseYaml(content) as AgentShieldConfig;
-      } catch {
-        // invalid config, use defaults
+      } catch (e) {
+        console.error(`Error parsing config file ${configPath}:`, e);
+        // invalid config, use defaults or empty object for partial configs
+        return {};
       }
     }
   }
@@ -95,6 +97,14 @@ rules:
 # defaultPolicy:
 #   minGrade: B
 #   minScore: 75
+
+# # Safe domains and SDKs to reduce false positives
+# safeDomains:
+#   - "^https?://api\\.feishu(?:\\.cn|\\.com)"
+#   - "^https?://open\\.larksuite\\.com"
+# safeSdks:
+#   - "@larksuiteoapi/node-sdk"
+#   - "feishu-sdk"
 
 # Provenance tracking
 # provenance:

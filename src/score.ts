@@ -17,19 +17,19 @@ import type { Finding, ScoreResult, DimensionScore, ProjectMeta, Grade } from ".
 // ─── Per-rule weight multipliers ───
 
 const RULE_WEIGHTS: Record<string, number> = {
-  // High severity — base -15
-  "reverse-shell": 3.0,
-  "attack-chain": 2.5,
-  "cross-file": 2.0,
-  "toxic-flow": 2.0,
-  "crypto-mining": 2.0,
-  "data-exfil": 2.0,
-  backdoor: 1.8,
-  "mcp-runtime": 1.8,
-  privilege: 1.5,
-  obfuscation: 1.3,
+  // High severity — base -35 (new base penalty)
+  "reverse-shell": 3.5, // Extremely critical
+  "attack-chain": 3.0,
+  "cross-file": 2.5,
+  "toxic-flow": 2.5,
+  "crypto-mining": 2.5,
+  "data-exfil": 2.5,
+  backdoor: 2.2,
+  "mcp-runtime": 2.2,
+  privilege: 1.8,
+  obfuscation: 1.5,
 
-  // Medium severity — base -6
+  // Medium severity — base -10 (new base penalty)
   "network-ssrf": 1.5,
   "python-security": 1.5,
   "go-rust-security": 1.3,
@@ -44,7 +44,7 @@ const RULE_WEIGHTS: Record<string, number> = {
   "mcp-manifest": 1.0,
   "skill-risks": 1.0,
 
-  // Low severity — base -2
+  // Low severity — base -3 (new base penalty)
   "credential-hardcode": 1.0,
   "excessive-perms": 1.0,
   "env-leak": 1.0,
@@ -55,9 +55,9 @@ const RULE_WEIGHTS: Record<string, number> = {
 // ─── Severity base penalties ───
 
 const SEVERITY_BASE: Record<string, number> = {
-  high: 15,
-  medium: 6,
-  low: 2,
+  high: 35, // Increased from 15
+  medium: 10, // Increased from 6
+  low: 3, // Increased from 2
 };
 
 // ─── Dimension mapping: which rules affect which dimension ───
@@ -307,10 +307,21 @@ export function computeScoreV2(findings: Finding[], meta?: ProjectMeta): ScoreRe
   // Overall: weighted + bonus, clamped to [-100, 100]
   const overall = Math.max(-100, Math.min(100, Math.round((weightedScore + bonus) * 10) / 10));
 
-    const grade = letterGrade(overall);
+  // Apply score caps based on highest severity finding (to prevent high scores with critical issues)
+  const hasHighFindings = findings.some(f => f.severity === "high" && !f.possibleFalsePositive);
+  const hasMediumFindings = findings.some(f => f.severity === "medium" && !f.possibleFalsePositive);
+
+  let finalOverall = overall;
+  if (hasHighFindings) {
+    finalOverall = Math.min(overall, 30); // Max score of 30 if any high findings are present
+  } else if (hasMediumFindings) {
+    finalOverall = Math.min(overall, 85); // Max score of 85 if any medium findings (and no high) are present
+  }
+
+  const grade = letterGrade(finalOverall);
 
   return {
-    overall,
+    overall: finalOverall,
     grade,
     gradeLabel: `${grade} · ${gradeLabel(overall)}`,
     dimensions,

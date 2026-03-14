@@ -19,7 +19,7 @@ export const supplyChainRule: Rule = {
     // Determine the target directory from the first file
     if (files.length === 0) return findings;
 
-    const targetDir = files[0]!.path.replace(files[0]!.relativePath, "").replace(/\/$/, "");
+    const targetDir = files[0]!.filePath.replace(files[0]!.relativePath, "").replace(/\/$/, "");
 
     // Check for package.json
     const pkgJsonPath = join(targetDir, "package.json");
@@ -98,9 +98,9 @@ function parseNpmAudit(output: string, findings: Finding[]): void {
           .map((v) => String(v.url))
           .join(", ");
 
-        const mappedSeverity: "low" | "low" | "low" =
-          severity === "low" || severity === "high" ? "low" :
-          severity === "moderate" ? "low" : "low";
+        const mappedSeverity: "high" | "medium" | "low" =
+          severity === "critical" || severity === "high" ? "high" :
+          severity === "moderate" ? "medium" : "low";
 
         findings.push({
           rule: "supply-chain",

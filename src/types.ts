@@ -78,7 +78,7 @@ export interface Rule {
 
 /** A file loaded for scanning */
 export interface ScannedFile {
-  path: string;
+  filePath: string; // Absolute path to the file
   relativePath: string;
   content: string;
   lines: string[];
@@ -104,6 +104,10 @@ export interface ScanConfig {
   severity?: Record<string, "high" | "medium" | "low">;
   failUnder?: number;
   ignore?: string[];
+  /** List of safe domain regex patterns for network operations (e.g., ["^https://api\\.feishu\\.cn"]) */
+  safeDomains?: string[];
+  /** List of safe SDK package names to reduce false positives (e.g., ["@larksuiteoapi/node-sdk", "feishu-sdk"]) */
+  safeSdks?: string[];
 }
 
 /** Per-agent security policy */

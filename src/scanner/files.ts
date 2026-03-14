@@ -81,7 +81,7 @@ export function collectFiles(dir: string, base?: string): ScannedFile[] {
         const content = readFileSync(fullPath, "utf-8");
         const relPath = relative(root, fullPath);
         files.push({
-          path: fullPath,
+          filePath: fullPath,
           relativePath: relPath,
           content,
           lines: content.split("\n"),

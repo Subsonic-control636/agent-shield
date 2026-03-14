@@ -1,3 +1,5 @@
+import { loadConfig } from "../config.js";
+import { dirname } from "path";
 import type { Rule, Finding, ScannedFile } from "../types.js";
 
 /**
@@ -20,9 +22,6 @@ const SSRF_PATTERNS: Array<{ pattern: RegExp; desc: string; severity: "medium" |
   { pattern: /169\.254\.169\.254/, desc: "AWS metadata endpoint access — potential SSRF", severity: "medium" },
 ];
 
-// Known safe API domains — template literal URLs to these are normal
-const SAFE_API_DOMAINS = /(?:feishu\.cn|lark\.com|github\.com|googleapis\.com|openai\.com|anthropic\.com|api\.slack\.com|graph\.microsoft\.com|api\.twitter\.com|api\.telegram\.org|discord\.com|api\.stripe\.com|api\.twilio\.com|api\.sendgrid\.com)\//i;
-
 export const networkSsrfRule: Rule = {
   id: "network-ssrf",
   name: "Server-Side Request Forgery",
@@ -30,6 +29,26 @@ export const networkSsrfRule: Rule = {
 
   run(files: ScannedFile[]): Finding[] {
     const findings: Finding[] = [];
+    const config = loadConfig(dirname(files[0]?.filePath || process.cwd()));
+
+    // Combine default safe APIs with user-defined safe domains
+    const defaultSafeApis = [
+      "(?:feishu\\.cn|lark\\.com)",
+      "github\\.com",
+      "googleapis\\.com",
+      "openai\\.com",
+      "anthropic\\.com",
+      "api\\.slack\\.com",
+      "graph\\.microsoft\\.com",
+      "api\\.twitter\\.com",
+      "api\\.telegram\\.org",
+      "discord\\.com",
+      "api\\.stripe\\.com",
+      "api\\.twilio\\.com",
+      "api\\.sendgrid\\.com",
+    ];
+    const safeDomainRegexes = [...defaultSafeApis, ...(config.safeDomains || [])];
+    const SAFE_API_REGEX = new RegExp(safeDomainRegexes.map(d => `(${d})`).join("|"), "i");
 
     for (const file of files) {
       if (file.ext === ".json" || file.ext === ".yaml" || file.ext === ".yml" || file.ext === ".md") continue;
@@ -42,7 +61,7 @@ export const networkSsrfRule: Rule = {
         for (const { pattern, desc, severity } of SSRF_PATTERNS) {
           if (pattern.test(line)) {
             // Skip template literal URLs to known safe API domains
-            if (desc.includes("template literal") && SAFE_API_DOMAINS.test(line)) continue;
+            if (desc.includes("template literal") && SAFE_API_REGEX.test(line)) continue;
 
             findings.push({
               rule: "network-ssrf",

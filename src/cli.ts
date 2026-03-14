@@ -85,8 +85,9 @@ program
       const { computeScore, computeScoreV2 } = await import("./score.js");
       const { totalLines } = await import("./scanner/files.js");
       result.score = computeScore(result.findings);
-      const projectMeta = { fileList: files.map(f => f.relativePath ?? f.path), totalLines: totalLines(files), totalFiles: files.length, hasNetworkCalls: result.findings.some(f => !f.possibleFalsePositive && ["data-exfil","phone-home","network-ssrf"].includes(f.rule)) };
+      const projectMeta = { fileList: files.map(f => f.relativePath), totalLines: totalLines(files), totalFiles: files.length, hasNetworkCalls: result.findings.some(f => !f.possibleFalsePositive && ["data-exfil","phone-home","network-ssrf"].includes(f.rule)) };
       result.scoreResult = computeScoreV2(result.findings, projectMeta);
+
     }
 
     if (options.json) {
@@ -414,7 +415,7 @@ program
       const { computeScore, computeScoreV2 } = await import("./score.js");
       const { totalLines } = await import("./scanner/files.js");
       result.score = computeScore(result.findings);
-      const projectMeta2 = { fileList: files.map(f => f.relativePath ?? f.path), totalLines: totalLines(files), totalFiles: files.length, hasNetworkCalls: result.findings.some(f => !f.possibleFalsePositive && ["data-exfil","phone-home","network-ssrf"].includes(f.rule)) };
+      const projectMeta2 = { fileList: files.map(f => f.relativePath), totalLines: totalLines(files), totalFiles: files.length, hasNetworkCalls: result.findings.some(f => !f.possibleFalsePositive && ["data-exfil","phone-home","network-ssrf"].includes(f.rule)) };
       result.scoreResult = computeScoreV2(result.findings, projectMeta2);
     }
 

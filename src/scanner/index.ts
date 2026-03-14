@@ -23,7 +23,7 @@ const CONTEXT_FP_RULES: Record<string, Set<string>> = {
 
 /** Build ProjectMeta from scanned files for bonus scoring */
 function buildProjectMeta(files: ScannedFile[], findings: Finding[]): ProjectMeta {
-  const fileList = files.map((f) => f.relativePath);
+  const fileList = files.map((f) => f.filePath);
   const tLines = totalLines(files);
   const hasNetworkCalls = findings.some(
     (f) => !f.possibleFalsePositive && (
@@ -96,7 +96,7 @@ export function scan(targetDir: string, configOverride?: Partial<ScanConfig>): S
 function postProcess(findings: Finding[], files: ScannedFile[], config: ScanConfig): void {
   for (const finding of findings) {
     const file = files.find(
-      (f) => f.relativePath === finding.file || f.path === finding.file
+      (f) => f.relativePath === finding.file || f.filePath === finding.file
     );
 
     // Context-based FP detection
@@ -193,7 +193,7 @@ function postProcess(findings: Finding[], files: ScannedFile[], config: ScanConf
 
 /** Classify finding confidence based on evidence quality and context */
 function classifyConfidence(finding: Finding, files: ScannedFile[]): "high" | "medium" | "low" {
-  const file = files.find(f => f.relativePath === finding.file || f.path === finding.file);
+  const file = files.find(f => f.relativePath === finding.file || f.filePath === finding.file);
 
   // High confidence: supply-chain CVEs, explicit injection patterns in SKILL.md
   if (finding.rule === "supply-chain") return "high";

@@ -1,3 +1,5 @@
+import { loadConfig } from "../config.js";
+import { dirname } from "path";
 import type { Rule, Finding, ScannedFile } from "../types.js";
 
 /**
@@ -29,6 +31,24 @@ export const dataExfilRule: Rule = {
 
   run(files: ScannedFile[]): Finding[] {
     const findings: Finding[] = [];
+    const config = loadConfig(dirname(files[0]?.filePath || process.cwd()));
+
+    // Combine default safe APIs with user-defined safe domains
+    const defaultSafeApis = [
+      "(?:feishu\\.cn|lark\\.com)",
+      "github\\.com",
+      "googleapis\\.com",
+      "openai\\.com",
+      "anthropic\\.com",
+      "api\\.slack\\.com",
+      "graph\\.microsoft\\.com",
+      "api\\.twitter\\.com",
+      "api\\.telegram\\.org",
+      "discord\\.com",
+      "api\\.stripe\\.com",
+    ];
+    const safeDomainRegexes = [...defaultSafeApis, ...(config.safeDomains || [])];
+    const SAFE_API_REGEX = new RegExp(safeDomainRegexes.map(d => `(${d})`).join("|"), "i");
 
     for (const file of files) {
       if (file.ext === ".json" || file.ext === ".yaml" || file.ext === ".yml" || file.ext === ".toml" || file.ext === ".md") continue;
@@ -54,26 +74,53 @@ export const dataExfilRule: Rule = {
         }
 
         if (readLines.length > 0 && sendLines.length > 0) {
-          findings.push({
-            rule: "data-exfil",
-            severity: "high",
-            file: file.relativePath,
-            line: sendLines[0],
-            message: `Reads sensitive data (line ${readLines.join(",")}) and sends HTTP request (line ${sendLines.join(",")}) — possible exfiltration`,
-            evidence: file.lines[sendLines[0]! - 1]?.trim().slice(0, 120),
-          });
+          // Check if the HTTP request is to a known safe API
+          const httpSendLine = file.lines[sendLines[0]! - 1];
+          if (httpSendLine && SAFE_API_REGEX.test(httpSendLine)) {
+            // It's a sensitive read + HTTP send, but to a safe API. Downgrade severity.
+            findings.push({
+              rule: "data-exfil",
+              severity: "medium", // Downgraded from high
+              file: file.relativePath,
+              line: sendLines[0],
+              message: `Reads sensitive data (line ${readLines.join(",")}) and sends HTTP request to known safe API (line ${sendLines.join(",")}) — possible exfiltration, but to safe domain. Review required.`,
+              evidence: httpSendLine.trim().slice(0, 120),
+            });
+          } else {
+            findings.push({
+              rule: "data-exfil",
+              severity: "high",
+              file: file.relativePath,
+              line: sendLines[0],
+              message: `Reads sensitive data (line ${readLines.join(",")}) and sends HTTP request (line ${sendLines.join(",")}) — possible exfiltration`,
+              evidence: httpSendLine?.trim().slice(0, 120),
+            });
+          }
         } else if (hasSafeCredentials && sendLines.length > 0) {
           // Credential access + HTTP is normal for API plugins — skip entirely
-          // (don't even report as medium — this is expected behavior)
+          // This block now accounts for SAFE_API_REGEX as part of the skip logic
+          const httpSendLine = file.lines[sendLines[0]! - 1];
+          if (httpSendLine && SAFE_API_REGEX.test(httpSendLine)) {
+            continue; // Skip if safe credential access and to a safe API
+          } else {
+            // It's safe credential access, but to an unknown API. Could still be suspicious.
+            // Downgrade to medium for review.
+            findings.push({
+              rule: "data-exfil",
+              severity: "medium",
+              file: file.relativePath,
+              line: sendLines[0],
+              message: `Reads credentials via safe access (line ${readLines.join(",")}) and sends HTTP request to unknown domain (line ${sendLines.join(",")}) — potential exfiltration`,
+              evidence: httpSendLine?.trim().slice(0, 120),
+            });
+          }
         }
       }
 
       // Warning: dynamic URL construction in fetch/request calls
-      // Skip known safe API domains (feishu, github, googleapis, etc.)
-      const SAFE_API = /(?:feishu\.cn|lark\.com|github\.com|googleapis\.com|openai\.com|anthropic\.com|api\.slack\.com|graph\.microsoft\.com|api\.twitter\.com|api\.telegram\.org|discord\.com|api\.stripe\.com)/i;
       for (let i = 0; i < file.lines.length; i++) {
         const line = file.lines[i]!;
-        if (DYNAMIC_URL_RE.test(line) && !SAFE_API.test(line)) {
+        if (DYNAMIC_URL_RE.test(line) && !SAFE_API_REGEX.test(line)) {
           findings.push({
             rule: "data-exfil",
             severity: "medium",

@@ -10,11 +10,12 @@ import type { ScannedFile } from "../src/types.js";
 function makeFile(relativePath: string, content: string): ScannedFile {
   const ext = "." + relativePath.split(".").pop()!;
   return {
-    path: `/fake/${relativePath}`,
+    filePath: `/fake/${relativePath}`, // 将 path 改为 filePath
     relativePath,
     content,
     lines: content.split("\n"),
     ext,
+    context: "source", // 添加 context
   };
 }
 
