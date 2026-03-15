@@ -1,19 +1,27 @@
 # 🛡️ AgentShield
 
-**AI Agent Risk Scanner — Detect security risks before they reach your agents**
+<p align="center">
+  <strong>AI Agent Risk Scanner — Detect security risks before they reach your agents</strong><br>
+  <strong>AI Agent 风险扫描器 — 基于 OWASP/MITRE 标准检测安全风险</strong>
+</p>
 
-**AI Agent 风险扫描器 — 基于 OWASP/MITRE 标准检测安全风险**
+<p align="center">
+  <a href="https://www.npmjs.com/package/@elliotllliu/agent-shield"><img src="https://img.shields.io/npm/v/@elliotllliu/agent-shield" alt="npm"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/tests-297%20passing-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/rules-29-blue" alt="Rules">
+  <img src="https://img.shields.io/badge/OWASP%20LLM-mapped-orange" alt="Standards">
+</p>
 
-[![npm](https://img.shields.io/npm/v/@elliotllliu/agent-shield)](https://www.npmjs.com/package/@elliotllliu/agent-shield)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-297%20passing-brightgreen)]()
-[![Rules](https://img.shields.io/badge/rules-29-blue)]()
-[![Standards](https://img.shields.io/badge/OWASP%20LLM-mapped-orange)]()
+<p align="center">
+  <a href="README.zh-CN.md">🇨🇳 中文文档</a> · <a href="docs/methodology.md">📚 Methodology</a> · <a href="docs/rules.md">📖 Rule Docs</a> · <a href="docs/integration-guide.md">🔌 Integration</a>
+</p>
 
-[🇨🇳 中文文档](README.zh-CN.md)
+---
+
 Scan skills, MCP servers, and plugins for data exfiltration, backdoors, prompt injection, tool poisoning, and supply chain risks. Every finding is mapped to **OWASP Top 10 for LLM**, **MITRE ATLAS**, and **CWE** — so you're reviewing established standards, not our opinions.
 
-**Offline-first. AST-powered. Open source. Your data never leaves your machine.**
+> **Offline-first. AST-powered. Open source. Your data never leaves your machine.**
 
 ```bash
 npx @elliotllliu/agent-shield scan ./my-skill/
