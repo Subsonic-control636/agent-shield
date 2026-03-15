@@ -182,93 +182,196 @@ function severityRank(s: string): number {
 }
 
 /**
- * Print aggregated report.
+ * Print aggregated report — 会诊模式
+ * Each engine gives its conclusion, then a comprehensive summary.
  */
 export function printAggregatedReport(result: AggregatedResult): void {
-  const divider = chalk.dim("─".repeat(60));
+  const divider = chalk.bold("━".repeat(50));
+  const thinDiv = chalk.dim("─".repeat(50));
+
+  // Engine icons
+  const ICONS: Record<string, string> = {
+    agentshield: "🛡️",
+    aguara: "🔍",
+    semgrep: "🔎",
+    "skill-vetter": "🔒",
+    tencent: "🏢",
+  };
+
+  // Engine specialty descriptions in Chinese
+  const SPECIALTY: Record<string, string> = {
+    agentshield: "AI Agent 安全",
+    aguara: "通用代码安全",
+    semgrep: "代码质量与注入检测",
+    "skill-vetter": "综合安全检查",
+    tencent: "基础设施安全",
+  };
+
+  // Risk name mapping for common rules
+  const RISK_ZH: Record<string, string> = {
+    "prompt-injection": "Prompt 注入",
+    "code-execution": "代码执行风险",
+    "data-exfil": "数据外泄",
+    "credentials": "硬编码凭证",
+    "ssrf": "请求伪造",
+    "supply-chain": "供应链风险",
+    "obfuscation": "代码混淆",
+    "env-access": "环境变量泄露",
+    "interception": "工具输出拦截",
+    "path-traversal": "路径遍历",
+    "dangerous-commands": "危险命令",
+    "mcp-config": "MCP 配置风险",
+    "regex-injection": "正则注入",
+  };
 
   console.log();
   console.log(divider);
-  console.log(chalk.bold("🛡️  AgentShield Multi-Engine Risk Report"));
+  console.log(chalk.bold("🛡️  安全检测报告"));
   console.log(divider);
-  console.log(chalk.dim(`📁 Target:   ${result.target}`));
-  console.log(chalk.dim(`🔧 Engines:  ${result.availableEngines}/${result.totalEngines} active`));
-  console.log(chalk.dim(`⏱  Time:     ${result.durationMs}ms`));
-  console.log(divider);
+  console.log();
+  console.log(chalk.dim(`📁 检测对象:  ${result.target}`));
+  console.log(chalk.dim(`🔧 检测引擎:  ${result.availableEngines} 个独立扫描器`));
+  console.log(chalk.dim(`⏱  总耗时:    ${(result.durationMs / 1000).toFixed(1)}s`));
+  console.log();
 
-  // Engine profiles
-  console.log(chalk.bold("\n📋 Engine Profiles\n"));
+  // ─── 各方检测结论 ───
+  console.log(thinDiv);
+  console.log(chalk.bold("🔍 各方检测结论"));
+  console.log(thinDiv);
+  console.log();
+
   for (const engine of result.engines) {
-    const icon = engine.available
-      ? (engine.findings ? chalk.green("✅") : chalk.red("❌"))
-      : chalk.dim("⬚");
-    const count = engine.findings?.length ?? 0;
-    const countStr = engine.available
-      ? (engine.error ? chalk.red("error") : `${count} findings`)
-      : chalk.dim("not installed");
-    console.log(`  ${icon} ${chalk.bold(engine.displayName)} (${countStr})`);
-    console.log(chalk.dim(`     ${engine.focus}`));
-  }
+    const icon = ICONS[engine.engine] || "🔧";
+    const specialty = SPECIALTY[engine.engine] || engine.focus;
 
-  // Cross-validated findings (the most valuable part)
-  if (result.crossValidated.length > 0) {
-    console.log(chalk.bold("\n🔗 Cross-Engine Validation\n"));
-    console.log(chalk.dim("  Findings confirmed by multiple engines have higher confidence.\n"));
-
-    for (const cv of result.crossValidated) {
-      const ratio = `${cv.detectedBy.length}/${cv.totalEngines}`;
-      const color = cv.agreement >= 0.66 ? chalk.red : cv.agreement >= 0.5 ? chalk.yellow : chalk.green;
-      const loc = cv.line ? `${cv.file}:${cv.line}` : cv.file;
-
-      console.log(color(`  ${cv.severity.toUpperCase()} [${ratio} engines] ${loc}`));
-      console.log(chalk.dim(`    ${cv.message}`));
-      console.log(chalk.dim(`    Detected by: ${cv.detectedBy.join(" · ")}`));
+    if (!engine.available) {
+      console.log(chalk.dim(`${icon} ${engine.displayName} — ${specialty}`));
+      console.log(chalk.dim(`   ⬚ 未安装`));
       console.log();
+      continue;
     }
-  }
 
-  // Per-engine findings summary
-  console.log(chalk.bold("📊 Findings by Engine\n"));
-  for (const engine of result.engines) {
-    if (!engine.findings || engine.findings.length === 0) continue;
-    const high = engine.findings.filter(f => f.severity === "high").length;
-    const med = engine.findings.filter(f => f.severity === "medium").length;
-    const low = engine.findings.filter(f => f.severity === "low").length;
+    if (engine.error || !engine.findings) {
+      console.log(chalk.dim(`${icon} ${engine.displayName} — ${specialty}`));
+      console.log(chalk.red(`   ❌ 检测出错`));
+      console.log();
+      continue;
+    }
 
-    console.log(`  ${chalk.bold(engine.displayName)}: ${engine.findings.length} total`);
-    const parts: string[] = [];
-    if (high > 0) parts.push(chalk.red(`${high} high`));
-    if (med > 0) parts.push(chalk.yellow(`${med} medium`));
-    if (low > 0) parts.push(chalk.green(`${low} low`));
-    console.log(`    ${parts.join(", ")}`);
+    const findings = engine.findings;
+    const high = findings.filter(f => f.severity === "high").length;
+    const med = findings.filter(f => f.severity === "medium").length;
+
+    console.log(chalk.bold(`${icon} ${engine.displayName} — ${specialty}`));
+
+    if (findings.length === 0) {
+      console.log(chalk.green(`   结论: ✅ 未发现风险`));
+    } else if (high > 0) {
+      console.log(chalk.red(`   结论: 🔴 发现 ${high} 处高风险${med > 0 ? `，${med} 处中等` : ""}`));
+    } else if (med > 0) {
+      console.log(chalk.yellow(`   结论: ⚠️ 发现 ${med} 处需关注`));
+    } else {
+      console.log(chalk.green(`   结论: ℹ️ ${findings.length} 处低风险提示`));
+    }
+
+    // Show top findings (max 3, high/medium only for brevity)
+    const important = findings
+      .filter(f => f.severity === "high" || f.severity === "medium")
+      .slice(0, 3);
+
+    for (const f of important) {
+      const cat = normalizeCategory(f.rule, f.message);
+      const name = RISK_ZH[cat] || f.message.slice(0, 30);
+      const loc = f.line ? `${f.file}:${f.line}` : f.file;
+      console.log(chalk.dim(`   • ${name}`));
+      if (loc) console.log(chalk.dim(`     📍 ${loc}`));
+    }
+
+    if (findings.length > important.length && important.length > 0) {
+      const rest = findings.length - important.length;
+      console.log(chalk.dim(`   • 另有 ${rest} 处低风险提示`));
+    }
+
     console.log();
   }
 
-  // Unique findings per engine
-  const uniqueByEngine = new Map<string, EngineFinding[]>();
-  for (const f of result.allFindings) {
-    const key = `${f.file}:${Math.floor((f.line || 0) / 5) * 5}:${normalizeCategory(f.rule, f.message)}`;
-    const isShared = result.crossValidated.some(cv => cv.key === key);
-    if (!isShared) {
-      if (!uniqueByEngine.has(f.engine)) uniqueByEngine.set(f.engine, []);
-      uniqueByEngine.get(f.engine)!.push(f);
+  // ─── 综合结论 ───
+  console.log(thinDiv);
+  console.log(chalk.bold("📊 综合结论"));
+  console.log(thinDiv);
+  console.log();
+
+  const allFindings = result.allFindings;
+  const totalHigh = allFindings.filter(f => f.severity === "high").length;
+  const totalMed = allFindings.filter(f => f.severity === "medium").length;
+  const activeEngines = result.engines.filter(e => e.available && e.findings);
+  const cleanEngines = activeEngines.filter(e => e.findings!.length === 0).length;
+
+  if (totalHigh > 0) {
+    console.log(chalk.red.bold("🔴 存在高风险，建议谨慎使用"));
+  } else if (totalMed > 0) {
+    console.log(chalk.yellow.bold("⚠️ 存在需关注的风险，建议检查后使用"));
+  } else if (allFindings.length > 0) {
+    console.log(chalk.green.bold("ℹ️ 仅有低风险提示，整体较安全"));
+  } else {
+    console.log(chalk.green.bold("✅ 所有引擎均未检出风险"));
+  }
+  console.log();
+
+  // Safe dimensions
+  const safeCategories = [
+    { name: "后门/远程控制", rules: ["backdoor", "reverse-shell"] },
+    { name: "数据窃取外渗", rules: ["data-exfil"] },
+    { name: "Prompt 指令注入", rules: ["prompt-injection", "multilang-injection"] },
+    { name: "挖矿行为", rules: ["crypto-mining"] },
+  ];
+
+  const foundRules = new Set(allFindings.map(f => normalizeCategory(f.rule, f.message)));
+  const safeOnes = safeCategories.filter(c => !c.rules.some(r => foundRules.has(r)));
+  const riskyOnes = safeCategories.filter(c => c.rules.some(r => foundRules.has(r)));
+
+  if (safeOnes.length > 0) {
+    for (const s of safeOnes) {
+      console.log(chalk.green(`  ✅ ${s.name} — ${activeEngines.length} 个引擎均未检出`));
     }
   }
+  if (riskyOnes.length > 0) {
+    for (const r of riskyOnes) {
+      console.log(chalk.red(`  ⚠️ ${r.name} — 已检出风险`));
+    }
+  }
+  console.log();
 
-  if (uniqueByEngine.size > 0) {
-    console.log(chalk.bold("🔍 Unique Findings (only one engine detected)\n"));
-    for (const [engineId, findings] of uniqueByEngine) {
-      const engine = result.engines.find(e => e.engine === engineId);
-      const high = findings.filter(f => f.severity === "high").slice(0, 3);
-      if (high.length > 0) {
-        console.log(`  ${chalk.bold(engine?.displayName || engineId)} unique:`);
-        for (const f of high) {
-          const loc = f.line ? `${f.file}:${f.line}` : f.file;
-          console.log(chalk.yellow(`    ${loc} — ${f.message}`));
-        }
-        console.log();
+  // Suggestions
+  if (totalHigh > 0 || totalMed > 0) {
+    console.log(chalk.bold("💡 建议"));
+    console.log();
+
+    const suggestions = new Set<string>();
+    for (const f of allFindings.filter(fi => fi.severity === "high" || fi.severity === "medium")) {
+      const cat = normalizeCategory(f.rule, f.message);
+      if (cat === "credentials" && !suggestions.has("cred")) {
+        suggestions.add("cred");
+        console.log(chalk.dim("  1. 移除或加密代码中的硬编码凭证"));
+      } else if (cat === "env-access" && !suggestions.has("env")) {
+        suggestions.add("env");
+        console.log(chalk.dim(`  ${suggestions.size}. 检查环境变量的网络请求是否为正常 API 调用`));
+      } else if (cat === "obfuscation" && !suggestions.has("obf")) {
+        suggestions.add("obf");
+        console.log(chalk.dim(`  ${suggestions.size}. 审查混淆代码的真实内容`));
+      } else if (cat === "code-execution" && !suggestions.has("exec")) {
+        suggestions.add("exec");
+        console.log(chalk.dim(`  ${suggestions.size}. 检查动态代码执行是否必要`));
+      } else if (cat === "interception" && !suggestions.has("intercept")) {
+        suggestions.add("intercept");
+        console.log(chalk.dim(`  ${suggestions.size}. 检查工具输出拦截是否为预期行为`));
+      } else if (!suggestions.has(cat)) {
+        suggestions.add(cat);
+        const name = RISK_ZH[cat] || cat;
+        console.log(chalk.dim(`  ${suggestions.size}. 检查 ${name} 相关代码`));
       }
     }
+    console.log();
   }
 
   console.log(divider);
