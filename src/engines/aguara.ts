@@ -9,7 +9,11 @@ export class AguaraAdapter implements EngineAdapter {
 
   async isAvailable(): Promise<boolean> {
     try {
-      execSync("aguara --version", { timeout: 5000, stdio: "pipe" });
+      execSync("aguara --version 2>/dev/null", {
+        timeout: 5000, stdio: "pipe",
+        shell: "/bin/bash",
+        env: { ...process.env, PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}` },
+      });
       return true;
     } catch {
       return false;
@@ -32,28 +36,35 @@ export class AguaraAdapter implements EngineAdapter {
     }
 
     try {
-      let output: string;
+      let raw: string;
       try {
-        output = execSync(`aguara scan "${targetDir}" --format json`, {
+        raw = execSync(`aguara scan "${targetDir}" --format json --no-color 2>/dev/null`, {
           timeout: 120000, stdio: ["pipe", "pipe", "pipe"], maxBuffer: 10 * 1024 * 1024,
+          shell: "/bin/bash",
+          env: { ...process.env, PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}` },
         }).toString();
       } catch (err: any) {
-        // aguara exits non-zero when findings exist — output is still valid
-        output = err.stdout?.toString() || "";
-        if (!output) throw err;
+        raw = err.stdout?.toString() || "";
+        if (!raw) throw err;
       }
 
+      // Clean non-JSON lines (update notifications, etc.)
+      const jsonStart = raw.indexOf("{");
+      const jsonEnd = raw.lastIndexOf("}");
+      if (jsonStart === -1 || jsonEnd === -1) throw new Error("No JSON in aguara output");
+      const output = raw.slice(jsonStart, jsonEnd + 1);
+
       const data = JSON.parse(output);
-      const findings: EngineFinding[] = (data.findings || data.results || []).map((f: any) => ({
+      const findings: EngineFinding[] = (data.findings || []).map((f: any) => ({
         engine: this.id,
-        severity: mapSeverity(f.severity || f.level),
-        file: f.file || f.path || "",
-        line: f.line || f.start_line,
-        rule: f.rule || f.rule_id || f.check || "",
-        message: f.message || f.description || "",
-        evidence: f.evidence || f.snippet || f.match || "",
+        severity: mapNumericSeverity(f.severity),
+        file: f.file_path || f.file || "",
+        line: f.line,
+        rule: f.rule_id || f.rule || "",
+        message: f.rule_name || f.description || "",
+        evidence: f.matched_text || f.snippet || "",
         confidence: f.confidence ?? 0.7,
-        category: f.category || f.rule,
+        category: f.category || f.rule_id || "",
       }));
 
       return {
@@ -70,7 +81,14 @@ export class AguaraAdapter implements EngineAdapter {
   }
 }
 
-function mapSeverity(s: string): "high" | "medium" | "low" | "info" {
+/** Aguara uses numeric severity: 1=critical, 2=high, 3=medium, 4=low, 5=info */
+function mapNumericSeverity(s: number | string): "high" | "medium" | "low" | "info" {
+  if (typeof s === "number") {
+    if (s <= 2) return "high";
+    if (s === 3) return "medium";
+    if (s === 4) return "low";
+    return "info";
+  }
   const lower = (s || "").toLowerCase();
   if (lower === "critical" || lower === "high") return "high";
   if (lower === "medium" || lower === "warning") return "medium";
