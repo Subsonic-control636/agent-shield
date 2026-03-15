@@ -4,12 +4,13 @@ import type { EngineAdapter, EngineResult, EngineFinding } from "./types.js";
 export class TencentGuardAdapter implements EngineAdapter {
   id = "tencent";
   displayName = "Tencent AI-Infra-Guard";
-  focus = "Infrastructure security: container escape, network config, cloud misconfig";
+  focus = "LLM-powered code audit: multi-stage agent scanning (requires API key)";
   url = "https://github.com/Tencent/AI-Infra-Guard";
 
   async isAvailable(): Promise<boolean> {
     try {
-      execSync("ai-infra-guard --version 2>/dev/null || python3 -m ai_infra_guard --version 2>/dev/null", {
+      // Tencent Guard is a Go/Docker project — check if compiled binary exists
+      execSync("ai-infra-guard version 2>/dev/null || test -f /tmp/AI-Infra-Guard/mcp-scan/main.py", {
         timeout: 5000, stdio: "pipe", shell: "/bin/bash",
       });
       return true;
@@ -19,7 +20,7 @@ export class TencentGuardAdapter implements EngineAdapter {
   }
 
   installInstructions(): string {
-    return `pip3 install ai-infra-guard`;
+    return `git clone https://github.com/Tencent/AI-Infra-Guard && cd AI-Infra-Guard/mcp-scan && pip install -r requirements.txt (requires LLM API key)`;
   }
 
   async scan(targetDir: string): Promise<EngineResult> {
