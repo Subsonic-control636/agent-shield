@@ -1,7 +1,7 @@
 {
   "name": "@elliotllliu/agent-shield",
   "version": "0.9.0",
-  "description": "Security scanner for AI agents, MCP servers & plugins — 29 rules, SDK-aware detection, confidence scoring, auth flow recognition, data flow tracking. Free, offline, open source.",
+  "description": "AI Agent risk scanner — detect security risks in skills, MCP servers & plugins. 29 rules mapped to OWASP Top 10 LLM, MITRE ATLAS & CWE standards. Offline, open source.",
   "type": "module",
   "bin": {
     "agent-shield": "./dist/cli.js"
