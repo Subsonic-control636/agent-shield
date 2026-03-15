@@ -45,8 +45,7 @@ program
         console.log(`📄 HTML 报告已保存: ${outPath}`);
       } else if (options.sarif) {
         const { scanToSarif } = await import("./reporter/sarif.js");
-        // Run single-engine scan for SARIF (standardized format)
-        const { scanDirectory } = await import("./scanner.js");
+        const { scanDirectory } = await import("./index.js");
         const singleResult = scanDirectory(targetPath, {});
         const sarifResult = scanToSarif(singleResult);
         const output = JSON.stringify(sarifResult, null, 2);
