@@ -10,6 +10,7 @@ import { printJsonReport } from "./reporter/json.js";
 import { generateBadgeSvg, generateBadgeMarkdown } from "./reporter/badge.js";
 import { discoverAgents, printDiscovery } from "./discover.js";
 import { getLlmConfigFromEnv, resolveAiConfig, runLlmAnalysis } from "./llm-analyzer.js";
+import { aggregateScan, printAggregatedReport, listEngines } from "./engines/aggregator.js";
 import { toSarif } from "./reporter/sarif.js";
 import { generateHtmlReport } from "./reporter/html.js";
 import { DEFAULT_CONFIG, DEFAULT_IGNORE, loadConfig } from "./config.js";
@@ -30,6 +31,7 @@ program
   .argument("<directory>", "Target directory to scan")
   .option("--json", "Output results as JSON")
   .option("--score", "Show reference score (optional risk density metric)")
+  .option("--engines <list>", "Multi-engine scan: all, or comma-separated (agentshield,aguara,tencent)")
   .option("--fail-under <score>", "Exit with code 1 if score is below threshold", parseInt)
   .option("--disable <rules>", "Comma-separated rules to disable")
   .option("--enable <rules>", "Comma-separated rules to enable (only these)")
@@ -39,10 +41,36 @@ program
   .option("--output <file>", "Write output to file instead of stdout")
   .option("--provider <provider>", "AI provider: openai | anthropic | ollama (default: auto-detect)")
   .option("--model <model>", "AI model to use (e.g. gpt-4o, claude-sonnet-4-20250514, llama3)")
-  .action(async (directory: string, options: { json?: boolean; sarif?: boolean; html?: boolean; output?: string; failUnder?: number; disable?: string; enable?: string; ai?: boolean; provider?: string; model?: string }) => {
+  .action(async (directory: string, options: { json?: boolean; sarif?: boolean; html?: boolean; output?: string; failUnder?: number; disable?: string; enable?: string; ai?: boolean; provider?: string; model?: string; engines?: string }) => {
     const target = resolve(directory);
     let scanTarget = target;
     let tempDir: string | null = null;
+
+    // Multi-engine mode
+    if ((options as any).engines) {
+      const engineStr = (options as any).engines as string;
+      if (engineStr === "list") {
+        const engines = listEngines();
+        console.log("\n🔧 Available Engines\n");
+        for (const engine of engines) {
+          const avail = await engine.isAvailable();
+          const icon = avail ? "✅" : "⬚";
+          console.log(`  ${icon} ${engine.displayName} (${engine.id})`);
+          console.log(`     ${engine.focus}`);
+          if (!avail) console.log(`     Install: ${engine.installInstructions()}`);
+          console.log();
+        }
+        return;
+      }
+      const engineIds = engineStr === "all" ? undefined : engineStr.split(",").map((s: string) => s.trim());
+      const aggResult = await aggregateScan(target, engineIds);
+      if (options.json) {
+        console.log(JSON.stringify(aggResult, null, 2));
+      } else {
+        printAggregatedReport(aggResult);
+      }
+      return;
+    }
 
     // Support .difypkg files (zip archives)
     if (target.endsWith(".difypkg") || target.endsWith(".zip")) {
