@@ -82,19 +82,21 @@ That's it. First run auto-installs all engines. After that, results come in seco
 
 ## Why Trust It?
 
-Because it's not one engine making the call. It's **4 independent scanning engines** that don't know each other, each doing their own analysis. Then we compare notes:
+Because it's not one engine making the call. It's **4 independent scanning engines**, each a specialist in their own domain. We don't compete with them — we bring them together.
 
-| Engine | What it's good at |
+| Engine | What it's best at |
 |--------|------------------|
 | 🛡️ **AgentShield** | AI Agent threats — skill hijack, prompt injection, MCP runtime |
 | 🔍 **[Aguara](https://github.com/garagon/aguara)** | General security — 177 rules, data exfil, taint tracking |
 | 🔎 **[Semgrep](https://github.com/semgrep/semgrep)** | Code quality — 2000+ rules, injection, XSS, hardcoded secrets |
 | 🧪 **[Invariant](https://github.com/invariantlabs-ai/mcp-scan)** | MCP-specific — tool poisoning, cross-origin escalation, rug pull |
 
+**Each engine has its own strengths. We combine all of them into one report.**
+
+The stronger they get, the stronger we get. We're not building another scanner — we're building the layer that makes every scanner better by cross-validating their results.
+
 **If 3 engines say safe and 1 says dangerous → probably a false positive.**
 **If 3 engines say dangerous → it's real.**
-
-Same idea as VirusTotal, but for AI agent plugins.
 
 ---
 
@@ -161,11 +163,13 @@ npm install -g @elliotllliu/agent-shield
 
 ## Our Philosophy
 
-> **"We're the X-ray machine, not the doctor. We show you what's inside — you decide whether to install it."**
+> **"We don't compete — we aggregate."**
 
-We don't make decisions for you. We lay out what 4 engines found, highlight the risks, and confirm what's safe. Then you decide.
+Snyk has great agent scanning. Cisco has skill-scanner. Semgrep has 2000+ rules. Invariant catches tool poisoning. Each one is excellent at what they do.
 
-But we try to make that decision easy.
+We bring them all together. We combine every engine's strengths, cross-validate their findings, and produce one unified report. The stronger each engine gets, the stronger AgentShield gets.
+
+**We're the X-ray machine, not the doctor.** We show you what's inside — you decide whether to install it. But we make that decision easy by giving you every expert's opinion in one place.
 
 ---
 
