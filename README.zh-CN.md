@@ -155,20 +155,29 @@ agent-shield scan ./my-skill/ --engines list
 | **[Semgrep](https://github.com/semgrep/semgrep)** | 通用 SAST：注入、XSS、SSRF、硬编码凭证（2000+ 规则） | `pipx install semgrep` |
 | **[Invariant mcp-scan](https://github.com/invariantlabs-ai/mcp-scan)** | MCP 专项：Tool Poisoning、跨域提权、Rug Pull 检测 | `pipx install mcp-scan` |
 
-### 交叉验证
+### 共识判断
 
-多引擎扫描的核心价值 — 多个独立扫描器共同确认的问题，更可能是真实风险：
+多引擎扫描的核心价值 — 不取最差结果，看多引擎共识：
+
+| 情况 | 综合结论 |
+|------|---------|
+| 2+ 引擎标高风险 | 🔴 确实需要关注 |
+| 1 引擎标高风险，其余干净 | ⚠️ 可能误报，建议确认 |
+| 2+ 引擎标中等风险 | ⚠️ 建议检查 |
+| 1 引擎标中等，其余干净 | ✅ 整体安全 |
+| 只有低风险 | ✅ 安全，常规行为 |
+| 全部干净 | ✅ 所有引擎均未检出 |
 
 ```
-🔗 Cross-Engine Validation
+📊 综合结论
 
-  HIGH [3/3 engines] plugin.ts:15
-    Dynamic code execution via eval()
-    Detected by: AgentShield · Aguara · Skill Vetter
+⚠️ 单个引擎标记高风险，其余未发现问题
+   3/5 个引擎未检出风险，高风险标记可能为误报
+   建议人工确认标记项是否为正常功能
 
-  MEDIUM [2/3 engines] src/bot.ts:492
-    Tool output interception
-    Detected by: Aguara · Skill Vetter
+  ✅ 后门/远程控制  — 5 个引擎均未检出
+  ✅ 数据窃取外渗   — 5 个引擎均未检出
+  ✅ Prompt 指令注入 — 5 个引擎均未检出
 ```
 
 > 我们聚合，不竞争。每个引擎都有独特优势——组合起来覆盖更全、可信度更高。

@@ -212,18 +212,27 @@ agent-shield scan ./my-skill/ --engines list
 
 ### Cross-Engine Validation
 
-The most valuable part of multi-engine scanning — when multiple independent scanners agree on a finding, it's much more likely to be a real issue:
+The most valuable part of multi-engine scanning — when multiple independent scanners agree on a finding, it's much more likely to be a real issue. When they disagree, the consensus logic makes smart judgments:
+
+| Scenario | Conclusion |
+|----------|-----------|
+| 2+ engines flag high risk | 🔴 Genuinely concerning |
+| 1 engine flags high, others clean | ⚠️ Likely false positive, verify manually |
+| 2+ engines flag medium | ⚠️ Worth checking |
+| 1 engine flags medium, others clean | ✅ Probably safe |
+| Only low-risk findings | ✅ Safe, routine behavior |
+| All engines clean | ✅ Fully safe |
 
 ```
-🔗 Cross-Engine Validation
+📊 综合结论
 
-  HIGH [3/3 engines] plugin.ts:15
-    Dynamic code execution via eval()
-    Detected by: AgentShield · Aguara · Skill Vetter
+⚠️ 单个引擎标记高风险，其余未发现问题
+   3/5 个引擎未检出风险，高风险标记可能为误报
+   建议人工确认标记项是否为正常功能
 
-  MEDIUM [2/3 engines] src/bot.ts:492
-    Tool output interception
-    Detected by: Aguara · Skill Vetter
+  ✅ 后门/远程控制  — 5 个引擎均未检出
+  ✅ 数据窃取外渗   — 5 个引擎均未检出
+  ✅ Prompt 指令注入 — 5 个引擎均未检出
 ```
 
 > We aggregate, not compete. Each engine has unique strengths — together they provide more complete coverage and higher confidence.
