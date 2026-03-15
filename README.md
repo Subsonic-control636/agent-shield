@@ -1,4 +1,4 @@
-# 🛡️ AgentShield
+<h1 align="center">🛡️ AgentShield</h1>
 
 <p align="center">
   <strong>AI Agent Risk Scanner — Detect security risks before they reach your agents</strong><br>
