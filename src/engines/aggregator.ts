@@ -8,6 +8,7 @@ import { AguaraAdapter } from "./aguara.js";
 import { TencentGuardAdapter } from "./tencent.js";
 import { SkillVetterAdapter } from "./skill-vetter.js";
 import { SemgrepAdapter } from "./semgrep.js";
+import { InvariantAdapter } from "./invariant.js";
 
 /**
  * Registry of all available engine adapters.
@@ -17,7 +18,7 @@ const ALL_ENGINES: EngineAdapter[] = [
   new AguaraAdapter(),
   new SkillVetterAdapter(),
   new SemgrepAdapter(),
-  new TencentGuardAdapter(),
+  new InvariantAdapter(),
 ];
 
 /**
@@ -195,7 +196,7 @@ export function printAggregatedReport(result: AggregatedResult): void {
     aguara: "🔍",
     semgrep: "🔎",
     "skill-vetter": "🔒",
-    tencent: "🏢",
+    invariant: "🧪",
   };
 
   // Engine specialty descriptions in Chinese
@@ -204,7 +205,7 @@ export function printAggregatedReport(result: AggregatedResult): void {
     aguara: "通用代码安全",
     semgrep: "代码质量与注入检测",
     "skill-vetter": "综合安全检查",
-    tencent: "基础设施安全",
+    invariant: "MCP Tool Poisoning 检测",
   };
 
   // Risk name mapping for common rules
