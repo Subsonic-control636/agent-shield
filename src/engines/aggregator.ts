@@ -7,6 +7,10 @@ import { AgentShieldAdapter } from "./agentshield.js";
 import { AguaraAdapter } from "./aguara.js";
 import { SemgrepAdapter } from "./semgrep.js";
 import { InvariantAdapter } from "./invariant.js";
+import { TrivyAdapter } from "./trivy.js";
+import { GitleaksAdapter } from "./gitleaks.js";
+import { BanditAdapter } from "./bandit.js";
+import { BearerAdapter } from "./bearer.js";
 
 /**
  * Registry of all available engine adapters.
@@ -16,6 +20,10 @@ const ALL_ENGINES: EngineAdapter[] = [
   new AguaraAdapter(),
   new SemgrepAdapter(),
   new InvariantAdapter(),
+  new TrivyAdapter(),
+  new GitleaksAdapter(),
+  new BanditAdapter(),
+  new BearerAdapter(),
 ];
 
 /**

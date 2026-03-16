@@ -111,7 +111,77 @@ export async function installInvariant(): Promise<boolean> {
 }
 
 /**
- * Check and auto-install all missing engines.
+ * Auto-install Trivy
+ */
+export async function installTrivy(): Promise<boolean> {
+  try {
+    const binDir = getEngineBinDir();
+    console.log("  📦 Trivy — 正在安装...");
+    execSync(
+      `curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "${binDir}" 2>/dev/null`,
+      { timeout: 120000, stdio: ["pipe", "pipe", "pipe"], shell: "/bin/bash" }
+    );
+    console.log("  ✅ Trivy — 安装完成");
+    return true;
+  } catch {
+    console.log("  ❌ Trivy — 安装失败，跳过");
+    return false;
+  }
+}
+
+/**
+ * Auto-install Gitleaks
+ */
+export async function installGitleaks(): Promise<boolean> {
+  try {
+    const binDir = getEngineBinDir();
+    const os = platform() === "darwin" ? "darwin" : "linux";
+    const cpu = arch() === "arm64" ? "arm64" : "x64";
+    console.log("  📦 Gitleaks — 正在安装...");
+    // Get latest release
+    const tag = execSync("curl -sI https://github.com/gitleaks/gitleaks/releases/latest | grep -i location | sed 's/.*tag\\///' | tr -d '\\r\\n'", {
+      timeout: 15000, stdio: ["pipe", "pipe", "pipe"], shell: "/bin/bash"
+    }).toString().trim();
+    if (tag) {
+      const url = `https://github.com/gitleaks/gitleaks/releases/download/${tag}/gitleaks_${tag.replace("v","")}_${os}_${cpu}.tar.gz`;
+      execSync(`curl -fsSL "${url}" | tar xz -C "${binDir}" gitleaks 2>/dev/null`, {
+        timeout: 60000, stdio: ["pipe", "pipe", "pipe"], shell: "/bin/bash"
+      });
+      console.log("  ✅ Gitleaks — 安装完成");
+      return true;
+    }
+    throw new Error("no tag");
+  } catch {
+    console.log("  ❌ Gitleaks — 安装失败，跳过");
+    return false;
+  }
+}
+
+/**
+ * Auto-install Bandit
+ */
+export async function installBandit(): Promise<boolean> {
+  return installPythonPackage("bandit", "Bandit");
+}
+
+/**
+ * Auto-install Bearer
+ */
+export async function installBearer(): Promise<boolean> {
+  try {
+    const binDir = getEngineBinDir();
+    console.log("  📦 Bearer — 正在安装...");
+    execSync(
+      `curl -sfL https://raw.githubusercontent.com/Bearer/bearer/main/contrib/install.sh | sh -s -- -b "${binDir}" 2>/dev/null`,
+      { timeout: 120000, stdio: ["pipe", "pipe", "pipe"], shell: "/bin/bash" }
+    );
+    console.log("  ✅ Bearer — 安装完成");
+    return true;
+  } catch {
+    console.log("  ❌ Bearer — 安装失败，跳过");
+    return false;
+  }
+}
  * Returns list of engine IDs that are now available.
  */
 export async function ensureEngines(
@@ -124,6 +194,10 @@ export async function ensureEngines(
     aguara: installAguara,
     semgrep: installSemgrep,
     invariant: installInvariant,
+    trivy: installTrivy,
+    gitleaks: installGitleaks,
+    bandit: installBandit,
+    bearer: installBearer,
   };
 
   for (const engine of engines) {
