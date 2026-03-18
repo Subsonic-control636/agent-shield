@@ -10,7 +10,7 @@ You found an MCP Server / Skill / Plugin online and want to install it. But you'
 
 > Is this thing safe? Will it steal my API keys? Hijack my AI? Mine crypto?
 
-**AgentShield answers that in 3 seconds.** One command, 8 independent scanning engines, one clear report.
+**AgentShield answers that in seconds.** One command, 8 independent scanning engines, one clear report.
 
 ```bash
 npx @elliotllliu/agent-shield scan ./that-thing-you-want-to-install
@@ -22,69 +22,65 @@ That's it. First run auto-installs all engines. After that, results come in seco
 
 ## See It In Action
 
-### When risks are found
-
 ```
-🛡️  Security Report
+🛡️  安全检测报告
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📁 Target:   ./mcp-playwright
-🔧 Engines:  8 independent scanners
-⏱  Time:     12.3s
+📁 检测对象:  ./mcp-puppeteer
+🔧 检测引擎:  8 个独立扫描器
+⏱  总耗时:    50.2s
 
 ──────────────────────────────────────────────────────
-🔍 Individual Conclusions
+🔍 各方检测结论
 ──────────────────────────────────────────────────────
 
-🛡️ AgentShield — AI Agent Security
-   Verdict: ⚠️ 2 items need attention
-   • Code obfuscation
-     📍 src/index.ts:1
+📋 AgentShield — 内置参考（AI Agent 基础检查）
+   结论: ⚠️ 发现 1 处需关注
+   • 代码混淆  📍 src/index.ts:1
 
-🔍 Aguara — General Code Security
-   Verdict: ✅ No risks found
+🔍 Aguara — 通用代码安全
+   结论: ✅ 未发现风险
 
-🔎 Semgrep — Code Quality & Injection
-   Verdict: ✅ No risks found
+🔎 Semgrep — 代码质量与注入检测
+   结论: ✅ 未发现风险
 
-🧪 Invariant — MCP Tool Poisoning
-   Verdict: ✅ No risks found
+🧪 Invariant — MCP Tool Poisoning 检测
+   结论: ✅ 未发现风险
+
+🔬 Trivy — 漏洞扫描 + 密钥检测
+   结论: ✅ 未发现风险
+
+🔑 Gitleaks — 密钥和 Token 泄露
+   结论: ✅ 未发现风险
+
+🐍 Bandit — Python 代码安全
+   结论: ✅ 未发现风险
+
+📡 Bearer — 数据流 + 隐私分析
+   结论: ✅ 未发现风险
 
 ──────────────────────────────────────────────────────
-📊 Overall Assessment
+📊 综合结论
 ──────────────────────────────────────────────────────
 
-✅ Safe overall, minor notes
-   3/4 engines found no issues
+✅ 所有引擎均未检出风险
+   （7/7 个外部引擎未检出风险）
 
-  ✅ Backdoors        — All 4 engines clear
-  ✅ Data theft        — All 4 engines clear
-  ✅ Prompt injection  — All 4 engines clear
-  ✅ Crypto mining     — All 4 engines clear
+  ✅ 后门/远程控制  — 7 个引擎均未检出
+  ✅ 数据窃取       — 7 个引擎均未检出
+  ✅ Prompt 注入    — 7 个引擎均未检出
+  ✅ 挖矿行为       — 7 个引擎均未检出
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**One glance: 3 out of 4 engines say it's clean. All major threats cleared. Safe to install.**
-
-### When everything is clean
-
-```
-✅ All engines found no risks
-
-  ✅ Backdoors        — All 4 engines clear
-  ✅ Data theft        — All 4 engines clear
-  ✅ Prompt injection  — All 4 engines clear
-  ✅ Crypto mining     — All 4 engines clear
-```
-
-**All green. Go ahead and install.**
+**One glance: 7 out of 7 external engines say it's clean. All major threats cleared. Safe to install.**
 
 ---
 
 ## Why Trust It?
 
-Because it's not one engine making the call. It's **8 independent scanning engines**, each a specialist in their own domain. We don't compete with them — we bring them together.
+Because it's not one engine making the call. It's **8 independent scanning engines**, each a specialist in their own domain. We bring them together:
 
 | Engine | What it's best at |
 |--------|------------------|
@@ -108,11 +104,15 @@ The built-in engine is reference-only — the overall conclusion is decided by t
 First time you run it, engines are auto-installed (to `~/.agentshield/`, no sudo needed):
 
 ```
-🔧 Checking engines...
-  ✅ AgentShield — Ready
-  📦 Aguara — Installing... Done
-  📦 Semgrep — Installing... Done
-  📦 Invariant — Installing... Done
+🔧 检查引擎...
+  ✅ AgentShield — 已就绪
+  📦 Aguara — 正在安装... 完成
+  📦 Semgrep — 正在安装... 完成
+  📦 Invariant — 正在安装... 完成
+  📦 Trivy — 正在安装... 完成
+  📦 Gitleaks — 正在安装... 完成
+  📦 Bandit — 正在安装... 完成
+  📦 Bearer — 正在安装... 完成
 ```
 
 **One-time setup. After that, it's instant.**
@@ -130,6 +130,8 @@ First time you run it, engines are auto-installed (to `~/.agentshield/`, no sudo
 | ⚠️ Prompt Injection | It's secretly adding instructions to your AI |
 | ⚠️ Tool Poisoning | Hidden malicious instructions in tool descriptions |
 | ⚠️ Obfuscated Code | Code is intentionally unreadable — might be hiding something |
+| ⚠️ Vulnerabilities | Known CVEs in dependencies |
+| ⚠️ Secret Leaks | API keys, tokens, passwords in source code |
 | ℹ️ Excessive Permissions | It asks for more than it needs |
 
 ---
@@ -168,11 +170,9 @@ npm install -g @elliotllliu/agent-shield
 
 > **"We don't compete — we aggregate."**
 
-Snyk has great agent scanning. Cisco has skill-scanner. Semgrep has 2000+ rules. Invariant catches tool poisoning. Each one is excellent at what they do.
+We bring every engine's strengths together, cross-validate their findings, and produce one unified report. The stronger each engine gets, the stronger AgentShield gets.
 
-We bring them all together. We combine every engine's strengths, cross-validate their findings, and produce one unified report. The stronger each engine gets, the stronger AgentShield gets.
-
-**We're the X-ray machine, not the doctor.** We show you what's inside — you decide whether to install it. But we make that decision easy by giving you every expert's opinion in one place.
+**We're the X-ray machine, not the doctor.** We show you what's inside — you decide whether to install it.
 
 ---
 
